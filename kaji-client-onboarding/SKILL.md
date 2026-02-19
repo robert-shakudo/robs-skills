@@ -210,6 +210,83 @@ Date: [today]
 [Any special considerations, dependencies, or risks]
 ```
 
+## Create ClickUp Deployment Task
+
+After presenting the summary and getting client confirmation, **automatically create a ClickUp task** to track the deployment.
+
+### Task Creation
+
+Use the `create_task` tool with these parameters:
+
+- **List**: Use the client's list if one exists under `Kaji` folder, otherwise create in `Agent Skills`
+- **Name**: `Kaji Deployment — [Client/Company Name]`
+- **Priority**: 2 (High)
+- **Description**: Populate with the full deployment summary (must-haves, nice-to-haves, timeline, config)
+
+### Subtasks
+
+Create a subtask for **every must-have item** so the team can track progress:
+
+```
+Parent: "Kaji Deployment — Acme Corp"
+├── Subtask: "Configure Claude Opus 4.5+ model access"          (Must-Have)
+├── Subtask: "Provision company API keys"                        (Must-Have)
+├── Subtask: "Set up Supabase integration"                       (Must-Have)
+├── Subtask: "Configure Mattermost channel"                      (Must-Have)
+├── Subtask: "Implement git operation approval guardrails"       (Must-Have)
+├── Subtask: "Testing & validation period"                       (Must-Have)
+└── Subtask: "Go-live"                                           (Must-Have)
+```
+
+Nice-to-have items go in the parent task description under a separate section — they don't need individual subtasks yet.
+
+### Task Description Template
+
+Use this markdown structure for the ClickUp task description:
+
+```markdown
+## Deployment Overview
+- **Client**: [name]
+- **Company**: [company]
+- **Go-Live Estimate**: [X business days]
+- **Full Setup Estimate**: [Y business days]
+- **Primary Model**: [model]
+- **Communication Channel**: [channel]
+
+## Must-Haves (Go-Live Requirements)
+| # | Requirement | Category | Est. Days |
+|---|-------------|----------|-----------|
+[populated from intake]
+
+## Nice-to-Haves (Post-Launch)
+| # | Requirement | Category | Est. Days |
+|---|-------------|----------|-----------|
+[populated from intake]
+
+## Configuration
+- **Models**: [list]
+- **API Keys**: [own/company/both]
+- **Integrations**: [list]
+- **Security**: [list]
+
+## Timeline
+| Phase | Duration |
+|-------|----------|
+| Environment Setup | X days |
+| Model Configuration | X days |
+| Integration Setup | X days |
+| Security Configuration | X days |
+| Testing & Validation | X days |
+| Go-Live | X days |
+| **Total** | **X days** |
+```
+
+### After Task Creation
+
+1. Share the ClickUp task URL with the client/manager
+2. Confirm: "I've created a ClickUp task to track your deployment: [URL]. Your team can follow progress there."
+3. If the onboarding was done via Mattermost, also post the task link in the thread
+
 ## Practical Guidance
 
 ### Conversation Style
@@ -235,11 +312,13 @@ Date: [today]
 2. Complete all 7 sections before generating the timeline
 3. Explicitly confirm the must-have vs nice-to-have classification with the client before presenting the final summary
 4. Include the 20% buffer in timeline estimates — things always take longer
-5. Save the final summary to a file and offer to send it via Mattermost
+5. Always create the ClickUp deployment task with subtasks — this is not optional
+6. Save the final summary to a file and offer to send it via Mattermost
 
 ## Integration
 
-- mattermost-notify — Send the final summary to the client or their manager via DM
+- ClickUp — Create deployment task with subtasks for every must-have item
+- mattermost-notify — Send the final summary and ClickUp task link to the client or manager via DM
 - project-memory — Record onboarding decisions for future reference
 - shakudo-microservice — Reference when estimating infrastructure setup time
 

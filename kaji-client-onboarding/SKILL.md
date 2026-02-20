@@ -96,7 +96,17 @@ Primary use case (brief description): ___
 
 **4. Platform Integrations**
 
-Kaji connects to the tools you already use. Select what's relevant:
+Every Kaji deployment includes our standard integration package at no extra setup:
+
+**Included in Basic Deployment (always on):**
+- Dremio (data lakehouse and analytics)
+- Mattermost (team messaging and collaboration)
+- MarkItDown (document format conversion)
+- NanoBanana (AI image generation and editing)
+- ClickUp (task tracking and workflow management)
+- Shakudo Platform (microservices, jobs, and environment management)
+
+**Add-On Integrations** — select any additional integrations your team needs:
 
 Development:
 - [ ] Browser automation and testing (Playwright)
@@ -106,34 +116,25 @@ Development:
 
 Data:
 - [ ] PostgreSQL / Supabase
-- [ ] Dremio data lakehouse
 - [ ] Neo4j graph database
 
 Knowledge:
-- [ ] Persistent memory across sessions
-- [ ] Library documentation lookup
+- [ ] Persistent memory across sessions (Graphiti)
+- [ ] Library documentation lookup (Context7)
 
 Communication:
-- [ ] Mattermost
-- [ ] Fireflies (meeting transcripts)
+- [ ] Fireflies (meeting transcripts and summaries)
 
 Project Management:
-- [ ] ClickUp
-- [ ] Notion
+- [ ] Notion (pages, databases, documents)
 
 Search:
-- [ ] Web search and research
-- [ ] Code search across repositories
-
-Infrastructure:
-- [ ] Shakudo Platform management
+- [ ] Web search and research (Tavily)
+- [ ] Specialized information retrieval (Exa)
+- [ ] Code search across repositories (Grep.app)
 
 Content:
 - [ ] Presentation generation (Gamma)
-- [ ] Image generation
-
-Files:
-- [ ] Document format conversion
 
 **5. Additional Integrations**
 
@@ -211,7 +212,8 @@ Apply these classification rules:
 | Models | At least 1 MaaS model selected | Local model support |
 | API Keys | Key decision (own/company/both) | — |
 | Use Cases | Primary use case(s) | Secondary "would be nice" items |
-| Integrations | Integrations they selected | Items marked "eventually" or "maybe" |
+| Basic Integrations | Always included (Dremio, Mattermost, MarkItDown, NanoBanana, ClickUp, Shakudo Platform) — 0 extra days | — |
+| Add-On Integrations | Add-ons they selected | Items marked "eventually" or "maybe" |
 | New Integrations | — | All (require development) |
 | Communication | Mattermost or CLI (available now) | Slack, Teams, other (require work) |
 | Security | Basic (git approval, no prod access) | Advanced (audit logging, custom rules, read-only) |

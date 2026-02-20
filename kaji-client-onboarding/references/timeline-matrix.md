@@ -48,26 +48,31 @@ However, complex or unusual use cases may require custom configuration:
 | Git Master | 0 | Included — Must-Have |
 | Dev Browser | 0 | Included — Must-Have |
 
-### MCP Integrations
+### Basic Deployment Integrations (always included — 0 extra days)
 
 | Item | Days | Classification |
 |------|------|----------------|
-| Supabase | 1 | Must-Have — DB connection + schema review |
-| Dremio | 1 | Must-Have — Connection + permissions |
-| Neo4j | 1 | Must-Have — Graph setup + index config |
-| Graphiti Memory | 0.5 | Must-Have — Already deployed, needs graph init |
-| Context7 | 0 | Included — no setup needed |
-| Mattermost | 0.5 | Must-Have — Channel config + permissions |
-| Fireflies | 1 | Must-Have — API key + meeting sync |
-| ClickUp | 1 | Must-Have — Workspace auth + permissions |
-| Notion | 1 | Must-Have — Integration token + page access |
-| Tavily Search | 0.5 | Must-Have — API key config |
-| Exa Web Search | 0.5 | Must-Have — API key config |
-| Grep.app | 0 | Included — no setup needed |
-| Shakudo Platform | 0 | Included — native integration |
-| Gamma | 0.5 | Must-Have — API key config |
-| NanoBanana | 0.5 | Must-Have — API key + model config |
-| MarkItDown | 0 | Included — no setup needed |
+| Dremio | 0 | Basic — included in every deployment |
+| Mattermost | 0 | Basic — included in every deployment |
+| MarkItDown | 0 | Basic — included in every deployment |
+| NanoBanana | 0 | Basic — included in every deployment |
+| ClickUp | 0 | Basic — included in every deployment |
+| Shakudo Platform | 0 | Basic — included in every deployment |
+
+### Add-On Integrations (additional setup required)
+
+| Item | Days | Classification |
+|------|------|----------------|
+| Supabase | 1 | Add-On — DB connection + schema review |
+| Neo4j | 1 | Add-On — Graph setup + index config |
+| Graphiti Memory | 0.5 | Add-On — Graph init + vector index |
+| Context7 | 0 | Add-On — no setup needed |
+| Fireflies | 1 | Add-On — API key + meeting sync |
+| Notion | 1 | Add-On — Integration token + page access |
+| Tavily Search | 0.5 | Add-On — API key config |
+| Exa Web Search | 0.5 | Add-On — API key config |
+| Grep.app | 0 | Add-On — no setup needed |
+| Gamma | 0.5 | Add-On — API key config |
 
 ## Section 5: New Integration Requests
 

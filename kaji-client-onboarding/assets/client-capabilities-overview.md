@@ -3,149 +3,192 @@
 
 Kaji is your team's AI-powered development partner. It reads, writes, and reasons about code, manages projects, searches the web, generates content, and integrates directly with your existing tools — all through natural conversation.
 
-This document outlines what Kaji can do. Review the capabilities below and let us know which ones matter most for your team — this helps us tailor your deployment and estimate your timeline.
+This document outlines what Kaji can do out of the box, what add-ons are available, and how to request custom tools for your workflow.
 
 ---
 
-## What Comes Standard
+## Part 1: What Comes Standard
 
-Every Kaji deployment includes the following capabilities out of the box.
+Every Kaji deployment includes the following functions and tools, ready on day one.
 
-### Code & Development
+### Code & File Operations
 
-| Capability | What It Does |
-|------------|-------------|
-| Code Generation | Write new code, functions, modules, and entire features from natural language descriptions |
-| Code Editing | Make precise changes to existing files — refactoring, bug fixes, feature additions |
-| Code Review | Analyze code for issues, suggest improvements, enforce best practices |
-| Code Intelligence | Jump to definitions, find all references, rename symbols across your codebase, surface errors and warnings in real-time |
-| Pattern Search & Replace | Find and replace code patterns across your entire project using structure-aware matching (supports 25+ languages) |
-| File Management | Read, write, search, and organize files across your project |
-| Terminal Access | Run shell commands, scripts, build tools, and test suites directly |
+These are Kaji's core functions — the fundamental actions it can perform on your codebase.
+
+| Function | What It Does | Example |
+|----------|-------------|---------|
+| Read Files | Open and read any file in your project, with line-level precision | "Show me lines 50-100 of the auth controller" |
+| Write Files | Create new files from scratch | "Create a new React component for the dashboard" |
+| Edit Files | Make precise, targeted changes to existing code | "Replace the deprecated API call on line 34 with the new endpoint" |
+| Search Files | Find files by name or pattern across your entire project | "Find all TypeScript files in the components directory" |
+| Search Content | Find specific text or patterns inside files using regex | "Find everywhere we call the payments API" |
+| Run Commands | Execute any shell command — build, test, deploy, install | "Run the test suite" / "Install the lodash package" |
+
+### Code Intelligence
+
+These tools understand your code's structure — not just text, but meaning.
+
+| Tool | What It Does | Example |
+|------|-------------|---------|
+| Go to Definition | Jump to where any function, class, or variable is defined | "Where is the `calculateTotal` function defined?" |
+| Find References | Find every place a symbol is used across the entire project | "Show me everywhere `UserService` is referenced" |
+| Symbol Search | List all functions, classes, and exports in a file or project | "What functions does the billing module export?" |
+| Error Detection | Surface errors, warnings, and type issues in real-time | "Are there any type errors in the files I just changed?" |
+| Safe Rename | Rename a variable, function, or class everywhere it's used | "Rename `getData` to `fetchUserProfile` across the project" |
+| Pattern Match | Find and replace code patterns using structure-aware matching (25+ languages) | "Replace all `console.log` calls with our logger" |
 
 ### Data & Analytics
 
-| Capability | What It Does |
-|------------|-------------|
-| Data Querying | Run SQL queries against your data warehouse for analysis, reporting, and insights |
+| Tool | What It Does | Example |
+|------|-------------|---------|
+| SQL Querying | Run queries against your data warehouse — analysis, reporting, joins, aggregations | "Show me all orders over $10K from last quarter" |
 
 ### Project Management
 
-| Capability | What It Does |
-|------------|-------------|
-| Task Management | Create, update, and track tasks and subtasks with full workflow support |
-| Document Management | Create and edit project documents, wikis, and knowledge bases |
-| Time Tracking | Log and review time entries against tasks |
-| Sprint Management | Organize work across sprints, folders, and lists |
+| Tool | What It Does | Example |
+|------|-------------|---------|
+| Task Management | Create, update, assign, and track tasks with priorities, due dates, and subtasks | "Create a bug ticket for the login issue and assign it to Sarah" |
+| Documents | Create and edit project docs, wikis, and knowledge bases | "Draft a technical spec for the new API" |
+| Time Tracking | Start/stop timers, log time entries, review tracked hours | "Log 2 hours on the database migration task" |
+| Sprints & Workflows | Organize work across sprints, folders, lists, and statuses | "Move all completed tickets to the Done column" |
 
 ### Communication
 
-| Capability | What It Does |
-|------------|-------------|
-| Team Messaging | Send and receive messages, participate in threads, share files, search conversation history |
-| Session Monitoring | Alert your team when the agent needs input or encounters an issue |
-| Scheduled Tasks | Set up recurring automated tasks on a schedule |
+| Tool | What It Does | Availability |
+|------|-------------|--------------|
+| Team Messaging | Send messages, reply in threads, share files, search history | Available (Mattermost) |
+| Alerts & Monitoring | Notify your team when the agent needs input or hits an issue | Available |
+| Scheduled Automation | Run recurring tasks on a cron schedule | Available |
+| Slack Integration | Channel and direct message integration | Beta |
+| Microsoft Teams | Channel and chat integration | Beta |
 
 ### Content Creation
 
-| Capability | What It Does |
-|------------|-------------|
-| Image Generation | Create and edit images using AI — diagrams, mockups, visual content |
-| Document Conversion | Convert between file formats (PDFs, Word docs, web pages to clean text) |
+| Tool | What It Does | Example |
+|------|-------------|---------|
+| Image Generation | Create and edit images with AI — diagrams, mockups, visual assets | "Generate a system architecture diagram" |
+| Document Conversion | Convert PDFs, Word docs, web pages, and other formats to clean text | "Convert this PDF to markdown" |
 
-### Infrastructure
+### Infrastructure & DevOps
 
-| Capability | What It Does |
-|------------|-------------|
-| Service Management | Deploy, scale, restart, and monitor microservices and pipeline jobs |
-| Environment Management | Manage development environments and configurations |
-| Build & Deploy | Trigger image builds and manage deployment workflows |
+| Tool | What It Does | Example |
+|------|-------------|---------|
+| Service Management | Deploy, scale, restart, and monitor microservices | "Scale the API service to 3 replicas" |
+| Pipeline Jobs | Create and manage batch jobs and scheduled pipelines | "Run the nightly data sync pipeline" |
+| Environment Config | Manage environments, resource limits, and configurations | "What environments are available for GPU workloads?" |
+| Image Builds | Build and deploy container images from Dockerfiles | "Build a new image from the updated Dockerfile" |
 
-### AI Agent Capabilities
+### AI & Research
 
-| Capability | What It Does |
-|------------|-------------|
-| Multi-Agent Orchestration | Breaks complex tasks into parallel subtasks and delegates to specialized agents for faster delivery |
-| Persistent Memory | Maintains context across sessions — remembers past decisions, preferences, and project history |
-| Web Research | Searches the web for current information, documentation, and code examples |
-| Library Documentation | Looks up real-time documentation for any programming library or framework |
+| Tool | What It Does | Example |
+|------|-------------|---------|
+| Multi-Agent Orchestration | Breaks complex work into parallel subtasks delegated to specialized agents | "Refactor the auth module" (spawns code, test, and review agents in parallel) |
+| Web Research | Searches the web for current information, docs, and examples | "What's the latest best practice for JWT refresh tokens?" |
+| Library Docs | Looks up real-time documentation for any programming library | "How does the useEffect cleanup work in React 19?" |
+| Code Examples | Finds real-world code examples from public repositories | "Show me how other projects implement rate limiting in Express" |
+| Memory | Maintains context across sessions — remembers decisions, preferences, and project history | Kaji recalls your coding conventions, past decisions, and project context |
 
 ---
 
-## Add-On Capabilities
+## Part 2: Add-On Tools
 
-These extend Kaji's reach into additional tools and workflows. Select what's relevant to your team.
+These extend Kaji into additional platforms and workflows. Select what's relevant to your team — each add-on is configured during deployment.
 
 ### Additional Data Sources
 
-| Capability | What It Does |
-|------------|-------------|
-| PostgreSQL / Supabase | Direct database queries and backend operations |
-| Graph Database (Neo4j) | Query and manage graph-structured data and relationships |
+| Tool | What It Does | Example |
+|------|-------------|---------|
+| PostgreSQL / Supabase | Direct database queries and backend operations | "Query the users table for accounts created this week" |
+| Graph Database (Neo4j) | Query and manage graph-structured data and relationships | "Find all customers connected to this product category" |
 
-### Additional Knowledge & Memory
+### Advanced Knowledge
 
-| Capability | What It Does |
-|------------|-------------|
-| Advanced Persistent Memory | Graph-based knowledge that grows over time — Kaji learns your codebase patterns, team preferences, and project context across every interaction |
-
-### Additional Communication
-
-| Capability | What It Does | Availability |
-|------------|-------------|--------------|
-| Mattermost | Full integration — messaging, threads, files, search, scheduling | Available |
-| Slack | Channel and direct message integration | Beta |
-| Microsoft Teams | Channel and chat integration | Beta |
-| CLI / Terminal | Command-line interface for developers | Available |
+| Tool | What It Does | Example |
+|------|-------------|---------|
+| Deep Persistent Memory | Graph-based knowledge that grows over time — learns your patterns, preferences, and context across every interaction | Kaji remembers that your team prefers functional components, uses Tailwind, and follows trunk-based development |
 
 ### Additional Project Management
 
-| Capability | What It Does |
-|------------|-------------|
-| Notion | Pages, databases, documents, and knowledge base management |
+| Tool | What It Does | Example |
+|------|-------------|---------|
+| Notion | Manage pages, databases, documents, and knowledge bases | "Create a new page in the Engineering wiki for the migration plan" |
 
-### Additional Search & Research
+### Additional Research & Intelligence
 
-| Capability | What It Does |
-|------------|-------------|
-| Meeting Intelligence | Search and analyze meeting transcripts, summaries, and action items (Fireflies) |
-| Advanced Web Search | Deep web research with content extraction and site crawling |
-| Code Search | Find real-world code examples and patterns across public repositories |
+| Tool | What It Does | Example |
+|------|-------------|---------|
+| Meeting Intelligence | Search and analyze meeting transcripts, summaries, and action items | "What did we decide about the API versioning in last week's meeting?" |
+| Advanced Web Research | Deep multi-source research with content extraction and site crawling | "Research all pricing page changes from our top 5 competitors" |
 
-### Additional Content Creation
+### Additional Content
 
-| Capability | What It Does |
-|------------|-------------|
-| Presentation Generation | Create polished presentations, documents, and social media content with AI |
+| Tool | What It Does | Example |
+|------|-------------|---------|
+| Presentation Generation | Create polished slide decks, documents, and social content with AI | "Create a 10-slide deck on our Q4 product roadmap" |
 
 ### Browser Automation
 
-| Capability | What It Does |
-|------------|-------------|
-| Automated Testing | Run browser-based tests, take screenshots, verify UI behavior |
-| Web Scraping | Extract data from websites and web applications |
-| Form Automation | Fill out forms, navigate workflows, interact with web applications |
-| Frontend Development | Design-to-code implementation, styling, responsive design |
-
-### Custom Integrations
-
-Don't see a tool you need? We can build custom integrations for your specific workflow. Common requests include CRM systems, CI/CD platforms, monitoring tools, and internal APIs.
+| Tool | What It Does | Example |
+|------|-------------|---------|
+| Automated Testing | Run browser-based tests, take screenshots, verify UI behavior | "Test the checkout flow and screenshot each step" |
+| Web Scraping | Extract structured data from websites | "Scrape the pricing tables from these 3 competitor pages" |
+| Form Automation | Fill forms, navigate workflows, interact with web apps | "Fill out the vendor onboarding form with these details" |
+| Frontend Development | Turn designs into working code, build UI components, handle styling | "Build a responsive pricing page matching this mockup" |
 
 ---
 
-## How to Use This Document
+## Part 3: Custom Tools & Integrations
 
-**Step 1:** Review the standard capabilities above — these are included in every deployment.
+Kaji's toolset is extensible. If your team uses tools not listed above, we can build custom integrations to connect them.
 
-**Step 2:** Check the add-on capabilities your team needs.
+### How Custom Tools Work
 
-**Step 3:** On the next page, describe your primary use cases and select the capabilities that support them. This drives our deployment plan and timeline.
+Kaji uses a standard protocol (MCP — Model Context Protocol) to connect to external tools. This means virtually any tool with an API can be integrated. The process:
+
+1. You tell us what tool you need connected
+2. We build the integration (typical turnaround: 5-15 business days depending on complexity)
+3. Kaji can then read from, write to, and interact with that tool through natural conversation
+
+### Common Custom Integration Requests
+
+| Category | Examples |
+|----------|---------|
+| CRM & Sales | Salesforce, HubSpot, Pipedrive |
+| CI/CD & DevOps | GitHub Actions, Jenkins, CircleCI, ArgoCD |
+| Monitoring & Observability | Datadog, PagerDuty, Grafana |
+| Cloud Providers | AWS, GCP, Azure management APIs |
+| Internal APIs | Your own microservices, databases, or business logic |
+| Productivity | Google Workspace, Jira, Linear, Confluence |
+| Communication | Discord, email (SMTP/IMAP), SMS |
+| Security | Vault, SIEM systems, compliance tools |
+
+### Request Your Custom Tools
+
+**Tool 1:**
+- Name: ___
+- What should Kaji be able to do with it? ___
+
+**Tool 2:**
+- Name: ___
+- What should Kaji be able to do with it? ___
+
+**Tool 3:**
+- Name: ___
+- What should Kaji be able to do with it? ___
+
+**Other tools or APIs you'd like connected:**
+
+___
 
 ---
 
-## Your Use Cases & Requirements
+## Part 4: Your Use Cases
 
-**What are the primary tasks you'd like Kaji to handle?** (check all that apply)
+Tell us what you want Kaji to help with. Be as specific as possible — this directly shapes your deployment.
+
+### Use Case Checklist
+
+Check all that apply:
 
 - [ ] Code generation and scaffolding
 - [ ] Code review and refactoring
@@ -159,56 +202,50 @@ Don't see a tool you need? We can build custom integrations for your specific wo
 - [ ] Project management and planning
 - [ ] Pre-sales and technical scoping
 - [ ] Content creation (presentations, images, documents)
+- [ ] Meeting follow-up and action items
+- [ ] Client communication automation
 - [ ] Other: ___
 
-**Describe your primary use case in a few sentences:**
+### Describe Your Primary Use Cases
 
-___
+For each use case, describe what a typical workflow looks like. The more detail you provide, the better we can configure Kaji.
 
-___
+**Use Case 1:**
+- What does your team do today? ___
+- What would you like Kaji to handle? ___
+- How often does this happen? (daily / weekly / ad-hoc) ___
 
-___
+**Use Case 2:**
+- What does your team do today? ___
+- What would you like Kaji to handle? ___
+- How often does this happen? ___
 
-**Which add-on capabilities does your team need?** (check all that apply)
+**Use Case 3:**
+- What does your team do today? ___
+- What would you like Kaji to handle? ___
+- How often does this happen? ___
 
-Data:
+### Which Add-On Tools Support Your Use Cases?
+
+Based on what you described above, check any add-ons you need:
+
 - [ ] PostgreSQL / Supabase
 - [ ] Graph Database (Neo4j)
-
-Knowledge:
-- [ ] Advanced Persistent Memory
-
-Communication:
+- [ ] Deep Persistent Memory
+- [ ] Notion
+- [ ] Meeting Intelligence (Fireflies)
+- [ ] Advanced Web Research
+- [ ] Presentation Generation
+- [ ] Browser Automation (testing, scraping, forms)
+- [ ] Frontend Development
 - [ ] Slack (Beta)
 - [ ] Microsoft Teams (Beta)
-
-Project Management:
-- [ ] Notion
-
-Search & Research:
-- [ ] Meeting Intelligence (Fireflies)
-- [ ] Advanced Web Search
-- [ ] Code Search (public repos)
-
-Content:
-- [ ] Presentation Generation
-
-Browser:
-- [ ] Automated Testing
-- [ ] Web Scraping
-- [ ] Form Automation
-- [ ] Frontend Development
-
-Custom:
-- [ ] Integration 1: ___
-- [ ] Integration 2: ___
-- [ ] Integration 3: ___
 
 ---
 
 ## What Happens Next
 
-1. You return this document with your selections
+1. You return this document with your selections and use case descriptions
 2. We classify your requirements into **go-live essentials** and **post-launch enhancements**
 3. You receive a deployment plan with timeline within **1 business day**
 4. We provision your environment and begin setup

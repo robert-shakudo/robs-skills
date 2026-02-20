@@ -1,8 +1,28 @@
 # Robs Skills
 
-Custom Kaji AI Agent skills for client onboarding, deployment, and workflow automation.
+Custom Kaji AI Agent skills for client onboarding, deployment, sales, and workflow automation.
 
 ## Skills
+
+### kaji-agentic-engineering-estimator
+
+Estimate Kaji Agentic Engineering engagements. Takes client use cases as input, classifies complexity (Simple/Medium/Complex), calculates dev streams needed, and outputs a full estimate with pricing, traditional comparison, savings percentage, and timeline.
+
+**Usage:**
+```
+openskills read kaji-agentic-engineering-estimator
+```
+
+**What it does:**
+1. Classifies use cases by complexity tier
+2. Calculates dev streams needed per use case
+3. Prices per stream with engagement model modifiers (Full Delivery / Co-Dev / Client-Led)
+4. Generates traditional vs Kaji cost comparison
+5. Outputs savings % and timeline estimates
+
+**Output:** Scoped estimate with use case breakdown, dev stream pricing, traditional comparison, and engagement recommendation.
+
+---
 
 ### kaji-client-onboarding
 

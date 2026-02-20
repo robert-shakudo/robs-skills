@@ -41,9 +41,16 @@ Ask the team member (not the client) for basic context using the `question` tool
 
 Using the context provided, draft a **personalized** onboarding email or document.
 
+The primary client-facing document is the **Capabilities Overview** (`assets/client-capabilities-overview.md`). This shows standard capabilities (without exposing internal tool names) and lets the client select add-ons and use cases. Always attach this document or embed its content.
+
+**Key rules:**
+- Standard capabilities are presented as "what comes included" — never expose internal tool names (no "Dremio MCP", no "ast_grep_search")
+- Communication channels other than Mattermost must be marked as **Beta**
+- The client's selections drive what additional tools we install
+
 #### If Email Format
 
-Draft a professional email from the Shakudo team to the client. Structure:
+Draft a short professional email from the Shakudo team introducing the capabilities doc. Structure:
 
 ```
 Subject: Kaji AI Agent — Getting Started with [Company Name]
@@ -322,9 +329,10 @@ Nice-to-have items go in the parent task description only.
 
 ## References
 
-- [Timeline Estimation Matrix](./references/timeline-matrix.md) — Day estimates per requirement type
-- [Client Onboarding Questionnaire](./assets/client-onboarding-questionnaire.md) — Branded document template
-- [Client Deployment Summary](./assets/client-deployment-summary.md) — Deliverable sent back to client
+- [Client Capabilities Overview](./assets/client-capabilities-overview.md) — Primary client-facing document. Lists standard capabilities and add-ons in business language. Client selects use cases and add-ons, which drives what we deploy. **This is the main doc we send.**
+- [Timeline Estimation Matrix](./references/timeline-matrix.md) — Day estimates per requirement type (internal)
+- [Client Onboarding Questionnaire](./assets/client-onboarding-questionnaire.md) — Detailed intake form (use if client needs more granular questions beyond the capabilities doc)
+- [Client Deployment Summary](./assets/client-deployment-summary.md) — Deliverable sent back to client after processing responses
 - [Internal Summary Template](./assets/onboarding-summary-template.md) — Internal tracking template
 
 ---

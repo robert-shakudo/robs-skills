@@ -2,9 +2,10 @@
 name: kaji-agentic-engineering-estimator
 description: "Estimate Kaji Agentic Engineering engagements. Takes client use cases as input, classifies complexity, calculates dev streams needed, and outputs a full estimate with pricing, traditional comparison, savings percentage, and timeline. Supports all three engagement models: Shakudo Agentic Team, Co-Development, and Client-Led."
 license: MIT
+compatibility: opencode
 metadata:
   author: robert-shakudo
-  version: "1.0"
+  version: "1.1"
   category: sales
 ---
 
@@ -40,13 +41,12 @@ If any use case is vague, clarify what systems, data sources, integrations, or o
 
 ### Step 2: Classify Each Use Case
 
-Use this complexity classification (round **up** when in doubt):
+See [Pricing Matrix](./references/pricing-matrix.md) for the full complexity classification table, per-stream pricing, and engagement model multipliers. Round **up** when in doubt.
 
-| Complexity | Signals | Dev Streams | Price Per Stream |
-|-----------|---------|-------------|-----------------|
-| Simple | Single integration, dashboard, prototype, chatbot, automation workflow, single API | 1 | $8K-15K |
-| Medium | Multi-source pipeline, ML model, copilot, multi-step automation, API platform, multi-integration | 2-3 | $10K-15K |
-| Complex | Full product, multi-system build, production deployment with scaling, data platform, enterprise app | 4-6 | $10K-12K (volume) |
+**Summary:**
+- Simple (1 stream, $8K–15K) — single integration, dashboard, chatbot, prototype
+- Medium (2–3 streams, $10K–15K) — multi-source pipeline, ML model, copilot, multi-step automation
+- Complex (4–6 streams, $10K–12K volume) — full product, multi-system build, enterprise app
 
 ### Step 3: Calculate Traditional Estimate
 
@@ -54,7 +54,7 @@ Use this complexity classification (round **up** when in doubt):
 - Medium: **$150-300K**, **3-6 months**
 - Complex: **$300K-700K+**, **6-12+ months**
 
-Sum across use cases for a total traditional range. Use the pricing matrix for guidance on combining multiple use cases.
+Sum across use cases for a total traditional range.
 
 ### Step 4: Calculate Kaji Price
 
@@ -86,19 +86,8 @@ Use the full template in [assets/estimate-template.md](./assets/estimate-templat
 - Always present the estimate to the team member for review **before** sharing with the client
 - Pricing is a starting point — Robert adjusts final numbers based on dev stream complexity
 - When in doubt, **round UP** on complexity (better to over-deliver than under-scope)
-- Reference proven engagements when a use case is similar (QuadReal for data/ML, Hitachi for agent platforms, Gallo for enterprise apps, SPP for data pipelines, Annexus for automation + Salesforce, MCP for AI assistants)
+- Reference proven engagements when a use case is similar — see [Pricing Matrix](./references/pricing-matrix.md) for calibration benchmarks
 - Do **not** show per-stream pricing breakdown to the client (internal only)
-
-## Proven Engagement Benchmarks (Calibration Only)
-
-| Client | Scope | Streams | Traditional | Kaji |
-|--------|-------|---------|------------|------|
-| QuadReal | 4 data sources, 3 ML models, 3 copilots, 4 dashboards | 3 | $700K | $300K |
-| Hitachi | AI Agent Hub vs Copilot | 4 | $300K | $40K |
-| MCP | Email assistant, HR docs, vibe coding, DMR reports | 4 | $200-300K | $50K |
-| SPP | Purchasing optimization platform, 5 integrations | 5 | $400K | $60K |
-| Gallo | Expense Express, GalloGPT, dev tools, n8n | 4 | $350K | $55K |
-| Annexus | Pre-sales automation (4 stages), chatbot, Kaji deployment | 6 | $400K | $65K |
 
 ## Anti-Patterns
 
@@ -106,6 +95,25 @@ Use the full template in [assets/estimate-template.md](./assets/estimate-templat
 - Don't estimate without understanding what each use case actually involves
 - Don't skip the complexity classification — it drives everything
 - Don't commit to a price without Robert's review
+
+## Error Handling
+
+- Use case too vague to classify → ask for clarification on systems, data sources, integrations, and outputs involved
+- No engagement model preference provided → default to Shakudo Agentic Team, note it in the estimate
+- Pricing outside normal range → flag it for Robert's review before presenting
+
+## Execution Checklist
+
+- [ ] All use cases gathered and clarified
+- [ ] Each use case classified by complexity tier (rounded up when uncertain)
+- [ ] Dev streams calculated per use case
+- [ ] Engagement model modifier applied
+- [ ] Volume discount applied if 5+ streams
+- [ ] Traditional estimate calculated for comparison
+- [ ] Savings percentage calculated
+- [ ] Estimate template filled out (assets/estimate-template.md)
+- [ ] Presented to team member for review before sharing with client
+- [ ] Next steps offered (proposal, ClickUp task, adjustments)
 
 ## Integration
 
@@ -115,15 +123,6 @@ Use the full template in [assets/estimate-template.md](./assets/estimate-templat
 
 ## References
 
-- [Pricing Matrix](./references/pricing-matrix.md)
+- [Pricing Matrix](./references/pricing-matrix.md) — Per-stream pricing, engagement model multipliers, volume rules, and calibration benchmarks
 - [Complexity Guide](./references/complexity-guide.md)
 - [Estimate Template](./assets/estimate-template.md)
-
----
-
-## Skill Metadata
-
-**Created**: 2026-02-19
-**Last Updated**: 2026-02-19
-**Author**: Robert @ Shakudo
-**Version**: 1.0

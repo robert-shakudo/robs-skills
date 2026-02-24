@@ -2,9 +2,10 @@
 name: kaji-client-onboarding
 description: "Draft and send client onboarding questionnaires for Kaji AI Agent deployments. Generates personalized emails or documents asking clients about model preferences, use cases, integrations, communication, and security requirements. When responses come back, processes them into a must-have/nice-to-have deployment timeline and creates a ClickUp task to track the rollout."
 license: MIT
+compatibility: opencode
 metadata:
   author: robert-shakudo
-  version: "2.0"
+  version: "2.1"
   category: onboarding
 ---
 
@@ -37,155 +38,40 @@ Ask the team member (not the client) for basic context using the `question` tool
 - What do we already know about their needs? (any context from sales calls, notes, etc.)
 - Preferred format: Email or Document?
 
-### Step 2: Generate the Outreach
+### Step 2: Choose Format and Generate the Outreach
 
-Using the context provided, draft a **personalized** onboarding email or document.
+Two options — pick based on what the team member requests (default to Email if no preference):
 
-The primary client-facing document is the **Capabilities Overview** (`assets/client-capabilities-overview.md`). This shows standard capabilities (without exposing internal tool names) and lets the client select add-ons and use cases. Always attach this document or embed its content.
+| Format | When to use | What to send |
+|--------|-------------|--------------|
+| **Email** | Quick intake, technical clients, short turnaround | Short personalized intro + inline questionnaire from template |
+| **Document** | Comprehensive review, formal clients, discovery phase | Capabilities Overview doc (shows full platform, client selects add-ons) |
 
 **Key rules:**
-- Standard capabilities are presented as "what comes included" — never expose internal tool names (no "Dremio MCP", no "ast_grep_search")
+- Never expose internal tool names (no "Dremio MCP", no "ast_grep_search", no "NanoBanana")
 - Communication channels other than Mattermost must be marked as **Beta**
 - The client's selections drive what additional tools we install
 
 #### If Email Format
 
-Draft a short professional email from the Shakudo team introducing the capabilities doc. Structure:
+Draft a short professional intro and embed the questionnaire from [assets/email-questionnaire-template.md](./assets/email-questionnaire-template.md).
 
-```
-Subject: Kaji AI Agent — Getting Started with [Company Name]
+Personalize:
+1. Subject line — include company name
+2. Opening paragraph — reference what you know about their needs (sales calls, ClickUp notes, Mattermost history)
+3. Closing — reference next steps or upcoming meeting
 
-Hi [Contact Name],
-
-[1-2 sentences: personalized opening referencing what we know about their needs or recent conversations]
-
-To get your Kaji environment configured, we need a few details from your team. This typically takes 5-10 minutes to complete.
-
----
-
-**1. Model Preferences**
-
-We support three AI model providers. Please rank your preference (1 = primary, 3 = backup):
-
-- [ ] Claude Opus 4.5+ (Anthropic) — Optimized for complex reasoning and code generation
-- [ ] GPT 5.2+ (OpenAI) — Advanced language understanding and problem-solving
-- [ ] Gemini Pro 3 (Google) — Multimodal capabilities and efficiency
-
-Preference ranking: ___
-
-Are you interested in running locally-hosted models?  [ ] Yes  [ ] No  [ ] Let's discuss
-
-Performance priority:  [ ] Speed  [ ] Quality  [ ] Balance
-
-**2. API Key Setup**
-
-- [ ] We'll provide our own API keys
-- [ ] We'd like Shakudo to provide and manage keys
-- [ ] Both — own keys for dev, managed keys for production
-
-**3. Use Cases**
-
-What will your team use Kaji for? (check all that apply)
-
-- [ ] Code generation and scaffolding
-- [ ] Code review and refactoring
-- [ ] Debugging and troubleshooting
-- [ ] Architecture consultation
-- [ ] Documentation generation
-- [ ] Test writing and QA
-- [ ] DevOps and CI/CD automation
-- [ ] Data analysis and insights
-- [ ] Research and information gathering
-- [ ] Project management and planning
-- [ ] Other: ___
-
-Primary use case (brief description): ___
-
-**4. Platform Integrations**
-
-Every Kaji deployment includes our standard integration package at no extra setup:
-
-**Included in Basic Deployment (always on):**
-- Dremio (data lakehouse and analytics)
-- Mattermost (team messaging and collaboration)
-- MarkItDown (document format conversion)
-- NanoBanana (AI image generation and editing)
-- ClickUp (task tracking and workflow management)
-- Shakudo Platform (microservices, jobs, and environment management)
-
-**Add-On Integrations** — select any additional integrations your team needs:
-
-Development:
-- [ ] Browser automation and testing (Playwright)
-- [ ] Frontend UI/UX design-to-code
-- [ ] Advanced Git operations
-- [ ] Interactive browser sessions
-
-Data:
-- [ ] PostgreSQL / Supabase
-- [ ] Neo4j graph database
-
-Knowledge:
-- [ ] Persistent memory across sessions (Graphiti)
-- [ ] Library documentation lookup (Context7)
-
-Communication:
-- [ ] Fireflies (meeting transcripts and summaries)
-
-Project Management:
-- [ ] Notion (pages, databases, documents)
-
-Search:
-- [ ] Web search and research (Tavily)
-- [ ] Specialized information retrieval (Exa)
-- [ ] Code search across repositories (Grep.app)
-
-Content:
-- [ ] Presentation generation (Gamma)
-
-**5. Additional Integrations**
-
-Are there tools not listed above you'd like Kaji to connect to?
-___
-
-**6. Communication Preference**
-
-How would your team prefer to interact with Kaji?
-
-- [ ] Mattermost (available now)
-- [ ] Slack
-- [ ] Microsoft Teams
-- [ ] CLI / Terminal
-- [ ] Other: ___
-
-**7. Security Requirements**
-
-What guardrails does your team need?
-
-- [ ] Code change approval required before execution
-- [ ] Git operation approval (commits, pushes, merges)
-- [ ] Restricted file/directory access
-- [ ] No production environment access
-- [ ] Full audit logging of all actions
-- [ ] Read-only mode (analyze only, no modifications)
-- [ ] Custom compliance rules: ___
-
-Specific paths or environments to restrict: ___
-
----
-
-Once we receive your responses, we'll have a deployment plan with timeline ready within 1 business day.
-
-[Personalized closing referencing next steps or upcoming meeting]
-
-Best,
-[Sender name]
-Shakudo Team
-```
+Do not send the template verbatim. The template is a starting point.
 
 #### If Document Format
 
-Use the client-facing questionnaire template from `assets/client-onboarding-questionnaire.md` as the base. Personalize the header with the client's company name and contact info. Save as a file and attach.
+Use the **Capabilities Overview** (`assets/client-capabilities-overview.md`) as the primary document. This is the polished client-facing doc that shows:
+- What comes standard in every deployment
+- Add-on tools available
+- Use case checklist
+- Custom integration request form
+
+Personalize the header with the client's company name and contact. Save as a file and attach to the email/Mattermost message.
 
 ### Step 3: Review with Team Member
 
@@ -335,11 +221,4 @@ Nice-to-have items go in the parent task description only.
 - [Client Deployment Summary](./assets/client-deployment-summary.md) — Deliverable sent back to client after processing responses
 - [Internal Summary Template](./assets/onboarding-summary-template.md) — Internal tracking template
 
----
 
-## Skill Metadata
-
-**Created**: 2026-02-19
-**Last Updated**: 2026-02-19
-**Author**: Robert @ Shakudo
-**Version**: 2.0

@@ -7,7 +7,6 @@ metadata:
   author: robert
   version: "2.0"
   category: reporting
-  priority: p1
 ---
 
 # Rob's Weekly Professional Services Strategic Update
@@ -48,23 +47,14 @@ Trigger phrases:
 
 ---
 
-## Robert's 2026 OKRs
+## OKRs
 
-### Kaji Onboarding (Internal + External)
-- **KR1:** 100% of ProServe EMs and Engineers in Kaji-enabled dev streams with full automation by **Q1-26**
-- **KR2:** Internal Dev/EM workflow with complete visibility (tasks, time, deliverables) by **Q1-26**
-- **KR3:** Baseline team utilization metric established, reach 70% by **Q3-26**
+See [references/okrs-2026.md](./references/okrs-2026.md) for the current OKR cycle. Three objective areas:
+- **Kaji Onboarding** (Internal + External)
+- **Agentic FDE Offering**
+- **Strategic Client Relationships**
 
-### Agentic FDE Offering
-- **KR1:** 80% of active clients onboarded to Agentic FDE / Agentic Engineering process by **Q2-26**
-- **KR2:** Deliver updated Agentic Engineering model to all clients by **Q2-26**:
-  - **New clients (Day 0-60):** New platform + component install process with Agentic delivery from day one
-  - **Existing clients (Day 60+):** Use case-driven adoption — migrate via targeted use cases
-
-### Strategic Client Relationships
-- **KR1:** 90% of active clients with regular strategic meetings (weekly/bi-weekly) and documented outcomes by **Q1-26**
-- **KR2:** Strategic architecture roadmaps to 80% of top-tier clients by **Q3-26**
-- **KR3:** 75% monetization rate for all new ProServe engagements by **Q3-26**
+When assigning OKR alignment in the report, use the objective name (not "Obj 1 KR2").
 
 ---
 
@@ -92,21 +82,7 @@ If another team ran the demo, call, or technical work — call it out. State Pro
 
 ### Customer Channel Map
 
-| Customer | Channel ID |
-|----------|------------|
-| CentralReach | z7mp4zwxwjf7zejx73f9snon9o |
-| CloudHQ | usjmzm83m7ytpfcud3ix64btpo |
-| EJ Gallo | 36b1cxary3fgzyjyiht8178oxa |
-| FlexiVan | n7koczpmxpdc5gccdc6jtzb8gy |
-| Huntington National Bank | qhco3cqqipy65mnkwoxo9ppepe |
-| J.T. Magen | 3zjffm3gfgdxkmzg8rp785d8w |
-| MCP | zyu3k63tktgojj1z5jot746way |
-| QuadReal | 8dj19yq4yp8uum153onwn7mf1a |
-| Thales Group / Hitachi | xc7bfhmquf8o58djmhybmmdknc |
-| Whitecap Resources | g3agr94typ843fpr94maoqez4o |
-| Ronald Reagan Foundation | eqxee6yput88u8yjxaecykcefr |
-
-Search by name for: Loblaw, Campbell/Martinrea, Annexus, BWX Technologies, ICI, Strategic Pharmacy Partners, Dynex, Ritual.
+See [references/channel-map.md](./references/channel-map.md) for all client channel IDs and internal channels.
 
 Also review:
 - **Rob-and-Kaji channel** (`6a3metsdnpn77q69ydj3tg6iwa`): Strategic decisions, new initiatives, OKR references
@@ -217,25 +193,7 @@ Every deliverable needs a name: "Kaji skill built by [Name]", "SOW draft prepare
 
 ## Accounts to Track
 
-| Client | Phase |
-|--------|-------|
-| CentralReach | Day 60+ - Scale |
-| Loblaw | Day 60+ - Scale |
-| Huntington | Day 60+ - Scale |
-| EJ Gallo | Day 60+ - Scale |
-| MCP | Day 60+ - Scale |
-| QuadReal | Day 30 - Foundation |
-| Thales/Hitachi | Day 60+ - Scale |
-| BWX Technologies | Day 60+ - Scale |
-| CloudHQ | Day 60+ - Scale |
-| Annexus | Day 0-30 - Foundation |
-| ICI | Day 0-30 - Foundation |
-| Whitecap Resources | Day 60+ - Scale |
-| FlexiVan | Day 60+ - Scale |
-| Campbell/Martinrea | Day 60+ - Scale |
-| J.T. Magen | Day 0-30 - Foundation |
-| Reagan Foundation | Day 60+ - Scale |
-| Strategic Pharmacy | Day 0 - Pre-engagement |
+See [references/client-registry.md](./references/client-registry.md) for the full client list with phases. Update that file as clients move phases — do not edit SKILL.md for phase changes.
 
 ---
 
@@ -280,18 +238,4 @@ When synthesizing updates:
 - Fireflies incomplete → "Fireflies data incomplete for [dates]"
 - Never fabricate data or make assumptions
 
----
 
-## Memory (Future Enhancement)
-
-Track per-client state week-over-week:
-- SOW status, phase, last activity date, current blockers, OKR alignment, key contacts, next milestone
-
-This enables the skill to reference prior weeks automatically and flag stale accounts.
-
----
-
-## Notes
-
-- v2.0 — major update Feb 2026 based on weekly update review feedback
-- Key changes: 2026 OKRs, NO color emojis, team attribution rules added, factual/strategic separation enforced, silent account requirement, phase framework simplified (0-30, 30-60, 60+), SOW timing rule (not before Day 60), team structure documented

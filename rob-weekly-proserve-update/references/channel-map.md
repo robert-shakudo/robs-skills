@@ -28,9 +28,12 @@ Last verified: March 2026. Update this file when channels are added, renamed, or
 | Thales Group / Hitachi | xc7bfhmquf8o58djmhybmmdknc | Public |
 | Whitecap Resources | g3agr94typ843fpr94maoqez4o | Public |
 
-## Search by Name (no dedicated channel found)
+## Client Channels — Monitoring / Ops Alerts
 
-Search Mattermost by client name for: Ritual.
+| Customer | Channel ID | Notes |
+|----------|------------|-------|
+| Ritual | `o4wu4wf3cpgjfpocmpqetczidy` | Prod monitoring alerts — no separate client relationship channel found |
+| Campbell | `cw5wxp5wajrz5nkc1yeqyxbazc` | Campbell Ops Alerts — prod monitoring |
 
 ## Internal Channels
 
@@ -38,8 +41,13 @@ Search Mattermost by client name for: Ritual.
 |---------|------------|---------|
 | Rob-and-Kaji | `6a3metsdnpn77q69ydj3tg6iwa` | Strategic decisions, new initiatives, OKR references |
 | Customer Engagement Team | `3fut87ap6tyadbsqo7z3me98ay` | Pipeline updates, escalations |
+| **functional-standup (= lt-standup)** | `3o7c4zyjy3ng8roqkdtaciujgc` | **PRIMARY** — weekly tally of all team updates across all functions |
+| operating-plan-2026 | `khyuqt64kfdi7n34woy3w56hne` | Private — 2026 strategy, OKR context |
 | ProServe - Convo & Stuff | `p1c4gedk8tdj8pq3k4rw48xksr` | ProServe general discussion |
 | ProServe - Dev | `m31dixt4otghzeysi9bcoukfir` | Engineering updates, dev work |
 | ProServe - Dev Leads | `y5nzbdniqtdu5y7i7ui3ppyauy` | Leads-level discussion |
 | ProServe - Project Management | `91fgemwmdbgyxjx8kmh4fnthno` | PM and sprint tracking |
-| functional-standup | search by name | Daily standups |
+| Support Team | `zahh3j4gu3dx9bh6h4enrb51pw` | Support escalations — relevant for Obj 5 |
+| eng-updates | `7ai374h3sfnm5ep6msohcju3fy` | Engineering team updates |
+| BDR Team | `7pwfa1e987nqt8x57ywhw3anua` | Sales pipeline — relevant for Obj 4 Revenue |
+| sales-demos | `6h45m8jdq7dy8en5fugu7i741h` | Demo activity — relevant for Obj 4 Revenue |

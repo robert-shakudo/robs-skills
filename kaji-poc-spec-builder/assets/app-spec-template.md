@@ -4,6 +4,38 @@
 
 ---
 
+## 0. Company Introduction
+
+> This section establishes who the client is before the spec begins. It should be readable by anyone on the Shakudo team picking this up for the first time — and by a client executive reviewing what we've built.
+
+**Company Name:** [Full legal or brand name]
+
+**Industry / Sector:** [e.g., Quantitative Finance, Healthcare Technology, Logistics & Supply Chain]
+
+**What They Do:**
+[2–3 sentences in plain language. What is their business? What do they produce, manage, or operate? Who are their customers?]
+
+**Company Size:**
+- Employees: [headcount or range — e.g., "~200 employees"]
+- Scale: [relevant scale metric — AUM, revenue range, # of locations, # of systems managed, etc.]
+- Geography: [HQ location + any key offices or operational footprint]
+
+**Technology Environment:**
+[Describe their infra posture relevant to this demo — cloud-native, on-premise, air-gapped, hybrid, legacy systems, security posture, compliance requirements. 2–4 bullet points.]
+- [e.g., Air-gapped infrastructure — all compute on-premise, no public cloud]
+- [e.g., Strict security — no external model APIs, LLM inference must be local]
+- [e.g., Primary tooling: Airflow, Confluence, JIRA, Perforce, TeamCity]
+
+**Audience for This Brief:**
+[Who is this spec written for? Who will read and act on it?]
+- Internal: [e.g., Shakudo ProServe team, solutions engineer, demo presenter]
+- Client: [e.g., VP of Engineering, Head of Operations, IT leadership]
+
+**Relationship Context:**
+[1–2 sentences on where we are with this client — new prospect, active engagement, post-demo follow-up, etc.]
+
+---
+
 ## 1. Overview
 
 **Application Name:**
@@ -219,6 +251,9 @@ Describe the page/screen structure:
 ## Jira-Friendly Summary
 
 > Use this for ClickUp tasks, sprint planning, or quick internal alignment.
+
+**Client**
+[Company name — industry — size — one line on what they do]
 
 **Overview**
 [1–2 sentence description of what the app is and why it matters]

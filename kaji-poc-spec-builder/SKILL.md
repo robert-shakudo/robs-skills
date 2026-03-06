@@ -5,7 +5,7 @@ license: MIT
 compatibility: opencode
 metadata:
   author: robert-shakudo
-  version: "1.2"
+  version: "1.3"
   category: solutions-engineering
   tags:
     - poc
@@ -87,6 +87,15 @@ Ask the user for:
 - **Known systems** — what tools, databases, or platforms are involved? (optional)
 - **Demo urgency** — when does this need to be showable?
 
+**If client name is provided, research the company before proceeding:**
+1. Fetch the client's website (homepage or About page)
+2. Extract: industry, what they do, approximate size, technology environment signals
+3. Pre-fill Section 0 (Company Introduction) from this research
+4. Note any infrastructure posture clues relevant to the demo (air-gapped, cloud-native, regulated, etc.)
+5. This research also informs Section 12 (brand colors) — do both in one fetch
+
+If the client can't be found or the website gives no useful context, note `[ASSUMED]` and proceed.
+
 If the use case is too vague to spec, ask **up to 3 clarifying questions**:
 1. Who is the primary user of this application?
 2. What are they currently doing manually or struggling with?
@@ -106,6 +115,13 @@ Do NOT ask more than 3 questions before proceeding with reasonable assumptions. 
 ### Phase 2: Generate the App Spec
 
 Fill out the full app specification using [App Spec Template](./assets/app-spec-template.md).
+
+Start with **Section 0 — Company Introduction**. This section comes first and sets the context for everyone who reads the spec. Fill it out before writing any capability or technical content.
+
+Key rules for Section 0:
+- Write it so a Shakudo team member picking this up for the first time immediately understands the client
+- Include the technology environment — this shapes which systems are ✅ available vs 🟡 mocked
+- The audience field tells the reader how much technical depth to expect in the rest of the spec
 
 Key rules for filling the spec:
 - **Write in plain language** — the spec should be readable by a client, not just engineers
@@ -276,6 +292,7 @@ Deliver the output in this order:
 - [ ] Source read first (if ClickUp task / Fireflies / Notion / pasted text provided)
 - [ ] Extracted context summarized before proceeding
 - [ ] Client name and use case captured
+- [ ] Section 0 (Company Introduction) filled — company background, size, tech environment, audience for brief
 - [ ] App type classified
 - [ ] Up to 3 clarifying questions asked (if needed — skip questions already answered by source)
 - [ ] Full app spec generated using app-spec-template.md

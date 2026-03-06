@@ -5,7 +5,7 @@ license: MIT
 compatibility: opencode
 metadata:
   author: robert-shakudo
-  version: "1.0"
+  version: "1.1"
   category: solutions-engineering
   tags:
     - poc
@@ -31,6 +31,9 @@ Convert a client use case into a complete POC specification, demo architecture, 
 - "Create a POC brief for [client]"
 - "Spec this out for me"
 - "What Shakudo components would we use for [problem]?"
+- "Build a spec from this ClickUp task / Fireflies call / Notion page / document"
+- "Rewrite this into a spec"
+- "Use [source] to build the spec"
 - Any client use case that needs to be converted into something demoable
 
 ## Two Modes
@@ -48,6 +51,33 @@ If not specified, default to **Full Spec + POC Architecture**.
 ---
 
 ## Execution Flow
+
+### Phase 0: Read Source (if a source is provided)
+
+**This phase runs BEFORE intake when the user points to an existing document, task, or transcript.**
+
+If the user provides any of the following, read it first before asking any questions:
+
+| Source | How to Read It | What to Extract |
+|--------|---------------|-----------------|
+| ClickUp task name or ID | `get_task` tool | Task name, description, comments, subtasks, assignees |
+| Fireflies meeting / transcript | `fireflies_get_summary` or `fireflies_search` | Meeting summary, action items, systems mentioned, problems discussed |
+| Notion page URL or name | `notionApi_API-retrieve-a-page` + `API-get-block-children` | Page content, tables, bullet lists |
+| Pasted text | Read directly | Use as-is — treat it as raw use case input |
+| Any URL | Web fetch | Extract relevant content from the page |
+
+**Extraction rules:**
+- Pull out: client name, problem statement, systems mentioned, user roles, desired outcomes, any scope notes
+- If the source is a meeting transcript, look for: pain points stated by the client, systems they use, what they asked for, what was agreed
+- If the source is a ClickUp task, look for: task description, any attached requirements, comments with additional context
+- Treat everything extracted as input to Phase 1 — skip questions you already have answers to
+
+**After reading the source**, state what you found in 2–3 sentences:
+> "I read [source]. Here's what I'm working with: [brief summary of extracted context]. Building the spec now."
+
+Then proceed directly to Phase 2 (skip or shorten Phase 1 based on what was extracted).
+
+---
 
 ### Phase 1: Intake
 
@@ -163,17 +193,22 @@ Produce a brief that an engineer can start from immediately:
 
 ## Output Format
 
+**SHOW-FIRST RULE: Always deliver the full spec output before offering to update or write anything. Never ask "should I update the ClickUp task?" before the spec is on screen. The user reads the spec first, then decides what to do with it.**
+
 Deliver the output in this order:
 
 1. **App Spec** (full or Jira-friendly based on mode)
 2. **Mock/Real System Map** (table)
 3. **Shakudo Platform Map** (table)
 4. **Demo Build Brief**
-5. **Next Steps** — offer to:
-   - Create a ClickUp task for the demo build
+5. **Next Steps** — only after the full output is shown, offer to:
+   - Update the ClickUp task with this spec (if a task was the source)
+   - Create a new ClickUp task for the demo build
    - Generate a client-facing one-pager
    - Start building (if on Shakudo platform with access)
    - Add this demo to the estimator as a use case
+
+> Never bundle the offer to update a ticket into the spec output itself. Show everything first. Offer actions after.
 
 ---
 
@@ -188,11 +223,13 @@ Deliver the output in this order:
 
 ## Anti-Patterns
 
+- **Don't offer to update a ticket before showing the spec** — always show the full output first; actions come after
 - Don't write vague capability descriptions — "AI-powered insights" says nothing; "returns the top 3 transfer candidates ranked by days of stock" says everything
 - Don't leave systems as TBD in the mock/real map — pick a mock strategy and move forward
 - Don't spec features out of scope for a demo — keep it tight and demoable in 5 minutes
 - Don't design a brand-new architecture if an existing demo is 80% of the way there
 - Don't skip the Example Interaction — it anchors everything else
+- Don't ask questions you already have answers to from the source — if you read a ClickUp task with a full description, go straight to building the spec
 
 ## Error Handling
 
@@ -203,9 +240,11 @@ Deliver the output in this order:
 
 ## Execution Checklist
 
+- [ ] Source read first (if ClickUp task / Fireflies / Notion / pasted text provided)
+- [ ] Extracted context summarized before proceeding
 - [ ] Client name and use case captured
 - [ ] App type classified
-- [ ] Up to 3 clarifying questions asked (if needed)
+- [ ] Up to 3 clarifying questions asked (if needed — skip questions already answered by source)
 - [ ] Full app spec generated using app-spec-template.md
 - [ ] Intelligence layer section filled out (LLM usage, agent behavior, tools)
 - [ ] Example Interaction written (concrete, not placeholder)
@@ -213,7 +252,8 @@ Deliver the output in this order:
 - [ ] Mock/Real System Map generated (all systems covered)
 - [ ] Shakudo Platform Map generated
 - [ ] Demo Build Brief produced with estimated build time
-- [ ] Next steps offered (ClickUp, one-pager, build)
+- [ ] **Full spec shown to user before any ticket update is offered**
+- [ ] Next steps offered after output is displayed (ClickUp update, one-pager, build)
 
 ## Integration
 

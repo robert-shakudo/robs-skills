@@ -165,6 +165,57 @@ This application provides value by helping users:
 
 ---
 
+## 12. Design, UI & UX
+
+> Fill this section whenever the app has a user-facing interface — dashboard, web UI, or chat UI skin. Skip if the only interface is Kaji chat with no custom frontend.
+
+**Visual Tone**
+[Describe the overall look and feel — e.g., "dark enterprise dashboard", "clean light SaaS", "terminal-style ops tool", "consumer-friendly warm interface".]
+
+**Brand Identity**
+
+| Element | Value |
+|---------|-------|
+| Primary color | `#[hex]` — [description] |
+| Secondary / background | `#[hex]` — [description] |
+| Accent / alert color | `#[hex]` — [description] |
+| Text color | `#[hex]` — [description] |
+| Font family | [Font name] — [weights used] |
+| Logo | [Source URL or "provided by client"] |
+
+**Color Usage Guide**
+- [Primary color]: [Where it's used — e.g., "interactive elements, buttons, highlights, active states"]
+- [Background]: [Where it's used — e.g., "page and card backgrounds"]
+- [Accent color]: [Where it's used — e.g., "critical alerts, P1 incidents, error states"]
+- [Text]: [Where it's used — e.g., "all body text, headings on light backgrounds"]
+
+**UI Layout**
+
+Describe the page/screen structure:
+- [Page or screen 1] — [what the user sees and does here]
+- [Page or screen 2] — [what the user sees and does here]
+- [Page or screen 3] — [what the user sees and does here]
+
+**Component Design**
+
+| Component | Design Notes |
+|-----------|-------------|
+| [e.g., Status indicator] | [e.g., Teal = healthy, Red = critical, Grey = unknown] |
+| [e.g., Incident card] | [e.g., Dark background, colored left border by severity] |
+| [e.g., Primary button] | [e.g., Teal fill, white text, Poppins 500] |
+| [e.g., Alert / notification] | [e.g., Red background, bold white text, dollar impact prominent] |
+| [e.g., Data table] | [e.g., Dark rows, alternating shades, teal column headers] |
+
+**Platform / Responsive Targets**
+- [e.g., Desktop first — 1440px primary width]
+- [e.g., Mobile not required for demo]
+- [e.g., Mattermost chat — no custom styling needed]
+
+**Accessibility Notes** *(optional)*
+- [Any contrast, font size, or accessibility requirements]
+
+---
+
 ## Jira-Friendly Summary
 
 > Use this for ClickUp tasks, sprint planning, or quick internal alignment.
@@ -200,3 +251,10 @@ This application provides value by helping users:
 
 **Scope (Demo)**
 [What's in, what's out]
+
+**Design**
+- Visual tone: [e.g., dark enterprise / light SaaS]
+- Primary color: `#[hex]`
+- Background: `#[hex]`
+- Font: [Font name]
+- UI pages: [list]

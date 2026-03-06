@@ -5,7 +5,7 @@ license: MIT
 compatibility: opencode
 metadata:
   author: robert-shakudo
-  version: "1.1"
+  version: "1.2"
   category: solutions-engineering
   tags:
     - poc
@@ -159,6 +159,39 @@ Common mappings:
 
 ---
 
+### Phase 4b: Design, UI & UX
+
+**Run this phase whenever the spec includes a user-facing interface** (dashboard, web UI, branded frontend). Skip if the only interface is plain Kaji chat with no custom UI.
+
+**If the client name or website is known:**
+1. Fetch the client's website (homepage or brand page)
+2. Extract brand CSS — look for Elementor global styles, CSS variables (`--e-global-color-*`), or inline style declarations
+3. Extract: primary color, background/secondary color, accent/alert color, text color, font family
+4. If no CSS is parseable, take a screenshot and extract colors visually
+
+**Fill out Section 12 (Design, UI & UX) of the spec:**
+
+| Field | How to get it |
+|-------|--------------|
+| Primary color | CSS `--e-global-color-primary` or dominant brand color |
+| Background / secondary | CSS `--e-global-color-secondary` or site background |
+| Accent / alert | CSS `--e-global-color-accent` or CTA/button color |
+| Font family | CSS `font-family` or Google Fonts link in `<head>` |
+| Visual tone | Infer from site — dark/light, minimal/editorial, enterprise/consumer |
+
+**Color usage rules (apply these defaults, adjust to context):**
+- Primary color → interactive elements, buttons, active states, highlights, savings counter
+- Background color → page and card backgrounds, nav bar
+- Accent color → critical alerts, error states, P1/P2 incidents, reject buttons
+- White → text on dark backgrounds
+- Font → all text, all weights
+
+**If no website is provided or colors can't be extracted:**
+- Note: `[ASSUMED — client brand colors not confirmed]`
+- Default to a clean dark enterprise palette: `#1A1A2E` background, `#4A90D9` primary, `#E53935` accent
+
+---
+
 ### Phase 5: Demo Build Brief
 
 Produce a brief that an engineer can start from immediately:
@@ -251,6 +284,7 @@ Deliver the output in this order:
 - [ ] Scope section is clear (in/out)
 - [ ] Mock/Real System Map generated (all systems covered)
 - [ ] Shakudo Platform Map generated
+- [ ] Design/UI/UX section filled (if app has a frontend — fetch brand colors from client website)
 - [ ] Demo Build Brief produced with estimated build time
 - [ ] **Full spec shown to user before any ticket update is offered**
 - [ ] Next steps offered after output is displayed (ClickUp update, one-pager, build)

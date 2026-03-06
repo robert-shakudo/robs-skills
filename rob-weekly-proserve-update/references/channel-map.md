@@ -32,7 +32,8 @@ Last verified: March 2026. Update this file when channels are added, renamed, or
 
 | Customer | Channel ID | Notes |
 |----------|------------|-------|
-| Ritual | `o4wu4wf3cpgjfpocmpqetczidy` | Prod monitoring alerts — no separate client relationship channel found |
+| Ritual | `hacsh5xqwibaj8fqsh5moiyiyw` | Client relationship channel |
+| Ritual (prod alerts) | `o4wu4wf3cpgjfpocmpqetczidy` | Prod monitoring alerts only |
 | Campbell | `cw5wxp5wajrz5nkc1yeqyxbazc` | Campbell Ops Alerts — prod monitoring |
 
 ## Internal Channels

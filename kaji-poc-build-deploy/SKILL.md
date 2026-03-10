@@ -5,10 +5,11 @@ license: MIT
 compatibility: opencode
 metadata:
   author: robert-shakudo
-  version: "1.0"
+  version: "1.1"
   category: solutions-engineering
   tags:
     - poc
+    - build
     - deploy
     - shakudo
     - microservice
@@ -16,270 +17,417 @@ metadata:
     - build
 ---
 
-# Kaji POC Deploy
+# Kaji POC Build & Deploy
 
 **Phase 2 of the POC workflow** — companion to `kaji-poc-spec-builder`.
 
-Takes a ClickUp task ID or POC name. Reads the spec. Deploys all components to `dev.hyperplane.dev` in one pass. Uses mocks for every unconfigured credential. Returns live URLs immediately.
+Takes a ClickUp task ID or POC name. Validates the spec. Checks ALL credentials upfront. Builds code, commits to git, deploys to `dev.hyperplane.dev`. Returns live URLs.
 
-**Core principle**: POC deploys from the `demos` git server (`devsentient/demos`). All demos run with mock data by default. Real credentials are env vars — swap them at any time to go live.
+**Core principle**: Ask for everything you need before you write a single line of code. Never discover a missing credential mid-flight.
 
 ---
 
 ## When to Activate
 
-- "deploy the [name] POC"
+- "build and deploy the [name] POC"
 - "go live with [ClickUp task URL]"
-- "build and launch this spec"
+- "build and deploy this spec"
 - "spin up the demo for [client]"
 - "redeploy / restart [service name]"
 - "take the [name] POC live — here are the credentials"
-- "deploy all demos"
-- Any request to move from spec → running application
-
----
-
-## Trigger Input Resolution
-
-Resolve the target POC in this order:
-
-1. **ClickUp task ID / URL** → `ClickUp_get_task(task: "86afvjudd")` → extract `name`, `description`, look up registry
-2. **POC name** (gallo, hr, reagan, campbell) → look up in registry directly
-3. **"the spec we just built"** → use most recently discussed ClickUp task in thread
-4. **"all"** → deploy every POC in the registry sequentially
-
-After resolving, confirm: *"Deploying [POC name] — [N] service(s). Using mocks for [systems]. Estimated time: ~2 min. Proceed?"*
+- "build and deploy all demos"
 
 ---
 
 ## Two Paths
 
-### Path A — Library POC (Gallo, HR Resume, Reagan, Campbell)
+### Path A — Library POC (Gallo, HR Resume, Reagan, Campbell, Dynex)
 
-Use the [POC Registry](./references/poc-registry.md) — all deployment config is pre-defined.
+Pre-built — code already exists. Skip Phase 2 (Build), go straight to Phase 3 (Deploy).
 
-→ Skip to **Phase 2: Deploy**
+→ See [POC Registry](./references/poc-registry.md) for exact configs.
 
 ### Path B — New POC from ClickUp Spec
 
-When the target POC doesn't exist in the registry yet:
-
-1. Read the ClickUp task description (the output of `kaji-poc-spec-builder`)
-2. Extract from the **POC Build Brief** section:
-   - Service list (backend / frontend / worker)
-   - Entry scripts (run.sh paths)
-   - Environment variables (POC block)
-   - Port numbers
-3. Confirm the git folder name (ask if not in spec)
-4. Follow Phase 2 below — treat as a single-service deploy until confirmed
+Code doesn't exist yet. Run all phases in order: validate → credential check → build → deploy → test.
 
 ---
 
-## Phase 1: Pre-flight
+## Phase 0: Spec Validation
 
-Before deploying, always run these checks:
+**STOP if the spec is missing required sections. Never build from an incomplete spec.**
 
-```
-USER_EMAIL = read from env: $USER_EMAIL
-```
+Read the ClickUp task. Confirm ALL of the following exist:
 
-If `USER_EMAIL` is not set, ask: "What email should own these services?"
+| Required | Where in spec | What to check |
+|---|---|---|
+| Service list | POC Build Brief | At least 1 service defined (backend / frontend / worker) |
+| Entry scripts | POC Build Brief | `run.sh` path named for each service |
+| Environment vars | POC Build Brief — "POC (dev)" block | Which LLM, which external systems |
+| Port numbers | POC Build Brief or Section 2 | Explicit or assumed 8787 |
+| External systems | Section 6 (Systems Connected) | Which are mocked vs real |
+| Mock/Real map | Mock/Real System Map table | Each system has a mock strategy |
 
-Verify git server is available:
-```
-shakudo-platform_listGitServers()  → confirm "demos" is IN_SYNC
-```
+If ANY section is missing → stop and tell the user:
+> "The spec is missing [X]. Update the spec first with `kaji-poc-spec-builder`, or tell me [X] now."
 
-Check for existing deployments (avoid duplicates):
-```
-shakudo-platform_searchMicroservice({ searchTerm: "[service-name]" })
-```
-
-If a service already exists with the same name and status is `running`:
-→ Ask: "A running [name] already exists. Restart it or deploy fresh?"
-- **Restart**: `shakudo-platform_restartService({ id: existing_id })`
-- **Fresh**: proceed with create (existing service will conflict — user must scale it down first)
+Do not build. Do not deploy. Wait.
 
 ---
 
-## Phase 2: Deploy
+## Phase 1: Credential Pre-flight
 
-Deploy every service defined in the registry for the target POC.
+**Run before writing any code. Ask for every key upfront. Never discover a missing credential mid-flight.**
 
-**Standard call pattern:**
+### 1a — Scan spec for external systems
+
+Read Section 6 (Systems Connected) and Mock/Real System Map. For every system NOT marked 🟡 Mocked, and every platform component mentioned (n8n, LLM, etc.) — check if the required credential exists.
+
+### 1b — Check all credentials
+
+```bash
+# GitHub token (required for all builds)
+git remote get-url origin   # check if token is embedded
+
+# n8n API key (if spec mentions n8n)
+cat /root/n8n-v2-api-key 2>/dev/null
+
+# LLM keys
+echo $OPENAI_API_KEY
+echo $ANTHROPIC_API_KEY
+```
+
+### 1c — Validate n8n key if spec uses n8n
+
+```bash
+N8N_KEY=$(cat /root/n8n-v2-api-key 2>/dev/null)
+# Test it — 200 = valid, 401 = expired
+curl -s -o /dev/null -w "%{http_code}" \
+  -H "X-N8N-API-KEY: $N8N_KEY" \
+  "https://n8n-v2.dev.hyperplane.dev/api/v1/workflows?limit=1"
+```
+
+If expired or missing — **STOP**:
+
+> "⚠️ n8n API key is [missing / expired].
+>
+> **What won't work without it:** [list specific workflows from spec — e.g., 'briefing approval flow', 'exception detection webhook']
+>
+> Get a fresh key: https://n8n-v2.dev.hyperplane.dev → Settings → API Keys → Create → save to `/root/n8n-v2-api-key`
+>
+> Reply with the key, drop it in the file, or say 'skip n8n' to deploy without automation workflows."
+
+Wait. Do not proceed until: valid key confirmed OR user says "skip n8n".
+
+### 1d — Show pre-flight summary and get confirmation
+
+```
+📋 Pre-flight — [POC Name]
+
+Services to build: [list]
+Repos: robert-shakudo/[name] + devsentient/demos/[folder]
+
+Credentials:
+  ✅ GitHub token — valid
+  ✅ USER_EMAIL — robert@shakudo.io
+  ✅ OPENAI_API_KEY — set (mock mode)
+  ⚠️ n8n API key — EXPIRED → [waiting for new key]
+
+What works in mock mode:
+  ✅ [service] — fully functional with mock data
+
+What requires a real key:
+  ⚠️ n8n approval workflow — blocked until key is updated
+
+ETA: ~10–15 min
+
+Proceed? (or provide missing keys first)
+```
+
+**Do not start building until confirmed.**
+
+---
+
+## Phase 2: Build — Git Structure Rules
+
+Every new POC MUST match the exact structure of existing demos. No exceptions.
+
+### Repository Convention
+
+| Artifact | Pattern | Example |
+|---|---|---|
+| Client GitHub repo | `robert-shakudo/{client}-{type}-demo` | `robert-shakudo/dynex-mbs-demo` |
+| Demos monorepo folder | same name without `-demo` | `devsentient/demos/dynex-mbs` |
+| Shakudo service names | `{client}-{type}-api`, `{client}-{type}-ui` | `dynex-mbs-api`, `dynex-mbs-ui` |
+| Live URLs | `{service-name}.dev.hyperplane.dev` | `dynex-mbs-ui.dev.hyperplane.dev` |
+
+### Required File Structure (every demo must have ALL of these)
+
+```
+{client}-{type}/                    ← folder in devsentient/demos
+├── README.md                       ← architecture + usage + KPIs + local dev
+├── APP_INFO_AND_ARCHITECTURE.md    ← technical topology diagram + env vars table
+├── api/ or backend/
+│   ├── main.py (or app.py)
+│   ├── requirements.txt
+│   └── run.sh
+├── ui/ or frontend/                ← only if spec has a frontend
+│   ├── package.json
+│   ├── src/
+│   └── run.sh
+└── skill/
+    ├── SKILL.md                    ← Kaji chat skill (YAML frontmatter + commands)
+    └── README.md                   ← skill install guide
+```
+
+### run.sh — always follow this exact format
+
+**Backend:**
+```bash
+#!/bin/bash
+set -e
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "$SCRIPT_DIR"
+pip install -q -r requirements.txt
+uvicorn main:app --host 0.0.0.0 --port 8787 --workers 1
+```
+
+**Frontend:**
+```bash
+#!/bin/bash
+set -e
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "$SCRIPT_DIR"
+npm install --legacy-peer-deps
+VITE_API_URL=https://{client}-{type}-api.dev.hyperplane.dev npm run build
+npx serve -s dist -l 8787
+```
+
+### Git commit order
+
+```bash
+# 1. Push to client repo first
+git init && git add -A && git commit -m "feat: initial build — [POC name]"
+git remote add origin https://${GH_TOKEN}@github.com/robert-shakudo/{name}.git
+git push -u origin main
+
+# 2. Mirror to devsentient/demos
+git clone --depth 1 https://${GH_TOKEN}@github.com/devsentient/demos.git /tmp/demos-build
+cp -r /tmp/{build-dir} /tmp/demos-build/{folder-name}/
+cd /tmp/demos-build
+
+# ⚠️ devsentient/demos .gitignore blocks *.csv — force-add any data files
+git add -f {folder}/api/data/*.csv 2>/dev/null || true
+git add {folder-name}/
+git commit -m "feat({folder}): add [POC name] — [client]"
+git push origin main
+```
+
+### skill/SKILL.md format (required in every demo)
+
+```yaml
+---
+name: {client}-{type}
+description: "Chat-native interface to [POC name]. [2-sentence description]. Use when [trigger]."
+license: MIT
+compatibility: opencode
+metadata:
+  author: robert-shakudo
+  version: "1.0"
+  category: [ops|analytics|hr|supply-chain|etc]
+  tags: [relevant-tags]
+---
+```
+
+Content sections: When to Activate, API endpoints used by skill, Behavior Guidelines (what to do for each trigger), Example Responses, Credentials Required.
+
+---
+
+## Phase 3: Deploy
+
+After code is in demos repo — wait for git server sync:
+
+```javascript
+shakudo-platform_checkGitServerSync()  // wait until IN_SYNC
+```
+
+Then deploy each service:
 
 ```javascript
 shakudo-platform_createMicroservice({
-  name: "[service-name]",                    // lowercase, hyphens, max 63 chars
+  name: "[service-name]",
   userEmail: process.env.USER_EMAIL,
-  environment: "basic-ai-tools-small",       // default; use "basic-medium" for heavier workloads
+  environment: "basic-ai-tools-small",  // "basic-medium" if run.sh uses apt-get
   gitServer: "demos",
   branch: "main",
-  port: 8787,                                // default; override per service
-  script: "[folder/run.sh]",                 // path relative to /tmp/git/monorepo/
-  parameters: [                              // env vars — mocks by default
-    { key: "OPENAI_API_KEY", value: "[mock-or-real]" },
-    { key: "ANTHROPIC_API_KEY", value: "[mock-or-real]" }
+  port: 8787,
+  script: "[folder]/[api-or-ui]/run.sh",
+  parameters: [
+    { key: "OPENAI_API_KEY", value: "[mock-or-real]" }
   ]
 })
 ```
 
-**For multi-service POCs** (e.g., Gallo): create all services in sequence. Don't wait for one to reach `running` before starting the next.
-
-After creating all services, confirm by summarizing:
-```
-Created [N] services:
-  ✅ [name-1] — deploying...
-  ✅ [name-2] — deploying...
-```
+For multi-service: create backend first, then frontend.
 
 ---
 
-## Phase 3: Poll & Verify
+## Phase 4: n8n Workflow Creation
 
-For each deployed service, poll status until `running` (timeout: 5 min):
+**Only if spec mentions n8n AND valid key was confirmed in Phase 1.**
+
+```bash
+N8N_KEY=$(cat /root/n8n-v2-api-key)
+
+# Create workflow
+curl -s -X POST "https://n8n-v2.dev.hyperplane.dev/api/v1/workflows" \
+  -H "X-N8N-API-KEY: $N8N_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ ...workflow JSON from spec build brief... }'
+
+# Activate it
+curl -s -X POST "https://n8n-v2.dev.hyperplane.dev/api/v1/workflows/{id}/activate" \
+  -H "X-N8N-API-KEY: $N8N_KEY"
+```
+
+If key was skipped → attach workflow JSON in thread:
+> "n8n workflow not created (key skipped). Import manually:
+> n8n v2 → New Workflow → ⋮ → Import from file → Activate"
+
+---
+
+## Phase 5: Poll & Verify
+
+Poll each service until `running` (5 min timeout):
 
 ```javascript
-// Poll every 30s
 shakudo-platform_searchMicroservice({ searchTerm: "[service-name]" })
-// → look for: status === "running"
 ```
 
-If not running after 3 polls, check logs:
-```javascript
-shakudo-platform_getPodEvents({ jobId: "[service-id]", tailLines: 50 })
-```
+Common failures:
 
-Common failures and fixes:
-| Log pattern | Cause | Fix |
+| Log pattern | Root cause | Fix |
 |---|---|---|
-| `ModuleNotFoundError` | Missing pip package | Check requirements.txt is in correct path |
-| `No such file or directory: run.sh` | Wrong `script` path | Verify git folder name matches demos repo |
-| `Address already in use` | Port conflict | Scale down existing service first |
-| `git-server-demos: not synced` | Stale git | Wait 60s, retry |
+| `No such file or directory: run.sh` | Wrong `script` path / folder name mismatch | Check demos repo sync, verify folder |
+| `*.csv not found` | .gitignore blocked data file | Re-add with `git add -f`, push, restart |
+| `ModuleNotFoundError` | Missing requirement | Fix requirements.txt, push, restart |
+| `Address already in use` | Old service still running | Scale down first |
 
 ---
 
-## Phase 4: Return Live URLs
+## Phase 6: E2E Smoke Test
 
-Once all services are `running`, output:
+After all services reach `running`, test every API endpoint from the spec using the internal cluster URL (bypasses Istio auth):
+
+```bash
+BASE="http://hyperplane-service-[id].hyperplane-pipelines.svc.cluster.local:8787"
+curl -s "$BASE/health"                    # health check
+curl -s "$BASE/[key-endpoint-1]"          # business endpoints
+curl -s -o /dev/null -w "%{http_code}" "$BASE/"  # frontend loads
+```
+
+Report as a table. Fix any `500` errors before reporting URLs — check logs, push fix, restart, retest.
+
+---
+
+## Phase 7: Return Live URLs
+
+Only after smoke tests pass:
 
 ```
 ✅ [POC Name] is live
 
-[Service]     → https://[name].dev.hyperplane.dev
-[Service]     → https://[name].dev.hyperplane.dev
+Frontend    → https://[name]-ui.dev.hyperplane.dev
+API         → https://[name]-api.dev.hyperplane.dev
+GitHub      → https://github.com/robert-shakudo/[name]
+ClickUp     → https://app.clickup.com/t/[id]
 
 Running with: mock [systems list]
+n8n:        ✅ [workflow] active  /  ⚠️ skipped (key not provided)
 
-To go live with real credentials, set:
-  [ENV_VAR]  → [what to provide]
-  [ENV_VAR]  → [what to provide]
+To go live with real credentials:
+  [ENV_VAR]  →  [description]
 
-Kaji skill: [skill-name] (install from skill marketplace)
-ClickUp spec: [task URL]
+Kaji skill: [skill-name]
+Install:    openskills install robert-shakudo/[repo]/skill
 ```
 
 ---
 
-## Phase 5: Credential Upgrade (Go-Live)
+## Phase 8: Update POC Registry
 
-When the user provides real credentials, upgrade the deployment without rebuilding.
+Add the new POC to `poc-registry.md` in this skill repo and commit:
 
-**Update env vars and restart:**
-
-1. Find the service ID:
-   ```javascript
-   shakudo-platform_searchMicroservice({ searchTerm: "[service-name]" })
-   ```
-
-2. Scale to zero, recreate with real params, wait for running:
-   ```javascript
-   // Option A: recreate (clean)
-   shakudo-platform_deleteMicroservice({ id: "[id]", confirm: true })
-   shakudo-platform_createMicroservice({
-     ...same config...,
-     parameters: [{ key: "OPENAI_API_KEY", value: "sk-real-key" }]
-   })
-   
-   // Option B: restart (if platform supports env var update)
-   shakudo-platform_restartService({ id: "[id]" })
-   ```
-
-3. Verify endpoints respond with real data.
+```bash
+# Edit /root/.claude/skills/kaji-poc-build-deploy/references/poc-registry.md
+# Follow the exact format of existing entries
+# Commit and push to robert-shakudo/robs-skills
+```
 
 ---
 
-## POC Registry Reference
+## Credential Upgrade (Go-Live)
 
-See [poc-registry.md](./references/poc-registry.md) for:
-- Exact service names, git folders, run.sh paths, ports
-- Mock vs real env vars per POC
-- Multi-service deployment order
-- Live URLs and ClickUp spec IDs
+When user provides real credentials after initial mock deploy:
 
----
-
-## Deployment State Tracking
-
-After a successful deployment, record in the Mattermost thread:
-
+```javascript
+// Recreate with real params
+shakudo-platform_deleteMicroservice({ id: "[id]", confirm: true })
+shakudo-platform_createMicroservice({
+  ...same config...,
+  parameters: [{ key: "OPENAI_API_KEY", value: "sk-real-key" }]
+})
 ```
-🚀 [POC Name] deployed
-Services: [list]
-URLs: [list]
-Mode: Mock / Partial / Live
-ClickUp: [task URL]
-Deployed: [timestamp]
-```
-
-If the user has a ClickUp task open, offer to add a comment with deployment details.
 
 ---
 
 ## Scale Down / Teardown
 
-When asked to "take down", "stop", or "clean up" a POC:
-
 ```javascript
-// Scale to zero (preserves service config, saves resources)
-shakudo-platform_scaleService({ id: "[service-id]", newReplicas: 0 })
+// Scale to zero (default — preserves config)
+shakudo-platform_scaleService({ id: "[id]", newReplicas: 0 })
 
-// Full delete (only if explicitly requested)
-shakudo-platform_deleteMicroservice({ id: "[service-id]", confirm: true })
+// Full delete (only if user says "delete" or "remove permanently")
+shakudo-platform_deleteMicroservice({ id: "[id]", confirm: true })
 ```
-
-Scale to zero by default — never delete unless the user says "delete" or "remove permanently".
 
 ---
 
 ## Execution Checklist
 
-- [ ] Target POC identified (library lookup or new spec)
-- [ ] `USER_EMAIL` resolved
-- [ ] `demos` git server confirmed IN_SYNC
-- [ ] Existing services checked (no duplicate deployment)
+- [ ] ClickUp spec read — all required sections present (Phase 0)
+- [ ] All external systems identified from spec
+- [ ] n8n key checked and validated if spec uses n8n (Phase 1c)
+- [ ] GitHub token confirmed valid
+- [ ] Pre-flight summary shown — user confirmed before any code written
+- [ ] Git structure follows standard: README, APP_INFO, run.sh, api/, ui/, skill/ (Phase 2)
+- [ ] Code pushed to `robert-shakudo/{name}` first
+- [ ] Mirrored to `devsentient/demos/{folder}/`
+- [ ] Data files force-added if blocked by .gitignore (`git add -f *.csv`)
+- [ ] `demos` git server confirmed IN_SYNC before deploy
 - [ ] All services created with correct `script` paths
-- [ ] All services polled to `running` status
-- [ ] Live URLs returned with mock/real status
-- [ ] Credential upgrade path shown
-- [ ] Skill name referenced for Kaji access
+- [ ] n8n workflows created via API (or JSON exported if key skipped)
+- [ ] All services polled to `running`
+- [ ] E2E smoke test run — all 500s fixed before reporting URLs
+- [ ] Live URLs returned with mock/real status + go-live credential path
+- [ ] POC registry updated
 
 ---
 
-## Anti-Patterns
+## Anti-Patterns (learned from Dynex)
 
-- **Never guess the `script` path** — use the exact paths from `poc-registry.md` or the ClickUp spec
-- **Never hardcode USER_EMAIL** — always read from `$USER_EMAIL` env var
-- **Never delete to redeploy** — always scale-to-zero first, then decide
-- **Never deploy without checking git server sync** — stale code is the #1 deployment failure
-- **Never skip Phase 4 verification** — confirm running status before returning URLs
-- **Never block on one service** — create all services first, then poll all in parallel
+- **Never start building if spec is missing Build Brief** — validate Phase 0 before any code
+- **Never discover a missing credential mid-flight** — Phase 1 runs before Phase 2, always
+- **Never assume n8n key is valid** — always validate with a live `401/200` check
+- **Never ignore `.gitignore` for data files** — demos repo blocks `*.csv`, force-add explicitly
+- **Never use a different folder structure than existing demos** — README, APP_INFO, run.sh, skill/ are required
+- **Never report live URLs before smoke tests pass** — fix 500s first
+- **Never create n8n workflows with an expired key** — export JSON as fallback, never guess
 
 ---
 
 ## Related Skills
 
-- **kaji-poc-spec-builder** — Phase 1: generate the spec this skill deploys
-- **shakudo-microservice** — Low-level microservice management reference
-- **kaji-agentic-engineering-estimator** — Price the engagement after the POC is approved
+- **kaji-poc-spec-builder** — Phase 1: generate the spec this skill builds and deploys
+- **shakudo-microservice** — Low-level platform reference
+- **kaji-agentic-engineering-estimator** — Price the engagement after the POC is built

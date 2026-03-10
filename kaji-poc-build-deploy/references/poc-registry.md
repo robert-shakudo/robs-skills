@@ -275,6 +275,92 @@ shakudo-platform_createMicroservice({
 
 ---
 
+## Dynex Capital — MBS Intelligence Platform
+
+**ClickUp Spec:** `86ag1jmra` → https://app.clickup.com/t/86ag1jmra
+**Client context:** Dynex Capital — fixed income / MBS portfolio analytics
+**Category:** Data & Analytics / Operational Assistant
+**GitHub (source):** https://github.com/robert-shakudo/dynex-mbs-demo
+
+### Services
+
+| Service | Name | Script | Port | Live URL |
+|---|---|---|---|---|
+| FastAPI backend | `dynex-mbs-api` | `dynex-mbs/api/run.sh` | `8787` | https://dynex-mbs-api.dev.hyperplane.dev |
+| React frontend | `dynex-mbs-ui` | `dynex-mbs/ui/run.sh` | `8787` | https://dynex-mbs-ui.dev.hyperplane.dev |
+
+### Deployment Calls
+
+```javascript
+// 1. Backend first
+shakudo-platform_createMicroservice({
+  name: "dynex-mbs-api",
+  userEmail: process.env.USER_EMAIL,
+  environment: "basic-ai-tools-small",
+  gitServer: "demos",
+  branch: "main",
+  port: 8787,
+  script: "dynex-mbs/api/run.sh",
+  parameters: [
+    { key: "OPENAI_API_KEY", value: "sk-mock" },
+    { key: "OTEL_EXPORTER_OTLP_ENDPOINT", value: "https://arize-phoenix.dev.hyperplane.dev" }
+  ]
+})
+
+// 2. Frontend
+shakudo-platform_createMicroservice({
+  name: "dynex-mbs-ui",
+  userEmail: process.env.USER_EMAIL,
+  environment: "basic-ai-tools-small",
+  gitServer: "demos",
+  branch: "main",
+  port: 8787,
+  script: "dynex-mbs/ui/run.sh",
+  parameters: []  // VITE_API_URL hardcoded to dynex-mbs-api.dev.hyperplane.dev
+})
+```
+
+### Mock vs Real Env Vars
+
+| Variable | Service | Mock (default) | Real (go-live) |
+|---|---|---|---|
+| `OPENAI_API_KEY` | dynex-mbs-api | Mock GPT-4o via LiteLLM — returns structured mock responses | Dynex Azure OpenAI key |
+| `OPENAI_BASE_URL` | dynex-mbs-api | Not set (uses LiteLLM mock) | `https://[dynex-azure].openai.azure.com/` |
+| `OPENAI_API_VERSION` | dynex-mbs-api | Not set | `2024-02-01` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | dynex-mbs-api | Arize Phoenix on Shakudo dev | Client's Arize Phoenix instance |
+| `N8N_WEBHOOK_URL` | dynex-mbs-api | `https://n8n-v2.dev.hyperplane.dev/webhook/briefing-approval` | Same (or client's n8n) |
+
+> **POC default**: 20 MBS positions pre-seeded (`dynex_portfolio_q1_2026.csv`). Portfolio Intelligence, Briefing View, 10-Q Extraction, and Audit Trail all work with mock LLM responses. n8n approval flow requires valid n8n API key.
+
+### n8n Workflows
+
+- **Workflow:** Dynex MBS — Briefing Approval
+- **Trigger:** `POST /webhook/briefing-approval`
+- **Flow:** Webhook → Respond immediately → Wait 5s → POST approval back to API
+- **CFO name in workflow:** Mike Sartori (CFO)
+
+> ⚠️ Requires valid n8n API key at `/root/n8n-v2-api-key`. Key expires — validate before deploying.
+
+### Known Issues (fixed)
+
+- `*.csv` blocked by devsentient/demos `.gitignore` — force-add with `git add -f dynex-mbs/api/data/*.csv`
+- `ReferenceError: BarChart3 is not defined` — fixed in current build (import added to PortfolioIntelligence.jsx)
+
+### Kaji Skill
+
+- Skill name: `dynex-mbs`
+- Trigger: `@kaji show my MBS portfolio`, `@kaji analyze exposure to agency debt`, `@kaji generate briefing`
+- Config var: `DYNEX_API_URL=https://dynex-mbs-api.dev.hyperplane.dev`
+
+### What the Demo Shows
+
+1. Portfolio Intelligence — analyst asks "show my top 5 MBS exposures" → ranked positions with dollar impact, ~3s
+2. Briefing View — generate full daily briefing → "Submit for CFO Approval" triggers n8n approval flow
+3. 10-Q Extraction — upload FNMA/FHLMC/GNMA PDF → structured pool table + CSV export
+4. Audit Trail — Arize Phoenix iframe showing every LLM call logged
+
+---
+
 ## Adding New POCs
 
 When a new POC is built from a spec, add an entry to this file:

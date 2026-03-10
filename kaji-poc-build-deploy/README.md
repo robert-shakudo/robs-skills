@@ -1,8 +1,8 @@
-# kaji-poc-deploy
+# kaji-poc-build-deploy
 
-**One-command POC deployment. Spec → running app in ~2 minutes.**
+**One-command POC build and deploy. Spec → running app in ~2 minutes.**
 
-Companion to `kaji-poc-spec-builder`. Phase 1 builds the spec. This deploys it.
+Companion to `kaji-poc-spec-builder`. Phase 1 builds the spec. This builds and deploys it.
 
 Reads a ClickUp task (from kaji-poc-spec-builder), deploys all components to `dev.hyperplane.dev` using the `demos` git server, uses mocks for every unconfigured credential, and returns live URLs.
 
@@ -66,7 +66,7 @@ Kaji reads the **POC Build Brief** section of the spec (env vars, service list, 
 ## File Structure
 
 ```
-kaji-poc-deploy/
+kaji-poc-build-deploy/
 ├── SKILL.md                       ← Kaji execution logic
 ├── README.md                      ← This file
 └── references/

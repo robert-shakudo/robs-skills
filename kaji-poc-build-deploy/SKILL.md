@@ -1,6 +1,6 @@
 ---
-name: kaji-poc-deploy
-description: "One-command POC deployment. Reads a ClickUp spec (from kaji-poc-spec-builder), deploys all components to Shakudo using the demos git server, uses mocks for all unconfigured credentials, returns live URLs. Companion to kaji-poc-spec-builder. Use when asked to build, deploy, launch, go live, or spin up a POC."
+name: kaji-poc-build-deploy
+description: "One-command POC build and deploy. Reads a ClickUp spec (from kaji-poc-spec-builder), builds and deploys all components to Shakudo using the demos git server, uses mocks for all unconfigured credentials, returns live URLs. Companion to kaji-poc-spec-builder. Use when asked to build, deploy, launch, go live, or spin up a POC."
 license: MIT
 compatibility: opencode
 metadata:

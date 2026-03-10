@@ -8,7 +8,7 @@ The core skill chain for building and deploying client POCs:
 
 ```
 kaji-poc-spec-builder  →  spec in ClickUp
-kaji-poc-deploy        →  running app on dev.hyperplane.dev (~2 min)
+kaji-poc-build-deploy  →  running app on dev.hyperplane.dev (~2 min)
 kaji-agentic-engineering-estimator  →  priced engagement
 kaji-client-onboarding →  full deployment plan
 ```
@@ -37,21 +37,21 @@ openskills read kaji-agentic-engineering-estimator
 
 ---
 
-### kaji-poc-deploy
+### kaji-poc-build-deploy
 
-**Phase 2 companion to `kaji-poc-spec-builder`.** One command — reads a ClickUp spec, deploys all components to Shakudo with mocks, returns live URLs. Same code goes live when you hand it real credentials.
+**Phase 2 companion to `kaji-poc-spec-builder`.** One command — reads a ClickUp spec, builds and deploys all components to Shakudo with mocks, returns live URLs. Same code goes live when you hand it real credentials.
 
 **Usage:**
 ```
-openskills read kaji-poc-deploy
+openskills read kaji-poc-build-deploy
 ```
 
 **Trigger phrases:**
 ```
-@kaji deploy the gallo POC
+@kaji build and deploy the gallo POC
 @kaji go live with https://app.clickup.com/t/86afvjudd
 @kaji spin up the HR resume demo
-@kaji deploy all POCs
+@kaji build and deploy all POCs
 @kaji take campbell live — ANTHROPIC_API_KEY=sk-ant-real-...
 ```
 

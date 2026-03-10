@@ -75,6 +75,13 @@ If critical info is still missing after reading all sources, ask **at most 3 que
 
 Make reasonable assumptions for anything still unknown. State them clearly.
 
+**Infrastructure question** — always ask this if client infra is unknown:
+
+> "Do you have the client's infrastructure details (cloud, auth, LLM setup)? Or should I default to Shakudo dev (`dev.hyperplane.dev`) for the POC and mark go-live environment as TBD?"
+
+- If infra details are provided → use them in Section 0 (tech environment), Section 6 (systems), and the environment table
+- If not → set POC env as `dev.hyperplane.dev` (Shakudo GCP), mark go-live as `[TBD — client to provide]` in the environment table, and note in Section 0 that infra will be confirmed before go-live
+
 **Research the client** (if name is known):
 1. Fetch client website (homepage + About page)
 2. Extract for **Section 0**: industry, what they do, size, tech environment
@@ -165,10 +172,6 @@ LLM_ENDPOINT=...
 **Go-live requirements from client** (checkboxes):
 - [ ] [What the client must provide]
 
-**POC walk-through** (5–10 steps, part of the spec):
-
-| Step | User Does | App Does | Talking Point |
-
 ---
 
 ## Output Format
@@ -179,12 +182,40 @@ Deliver in this order:
 1. Full spec (sections 0–12)
 2. Mock/Real System Map + environment table
 3. Shakudo Platform Map
-4. POC Build Brief
+4. POC Build Brief (without walk-through)
+
+Then ask:
+> "Do you want a POC walk-through added? (step-by-step presenter flow)"
+
+- If **yes** → generate the walk-through table and append it to the spec
+- If **no** → skip it
 
 Then offer:
 - Update the ClickUp task with this spec (one task, no subtasks — description IS the full spec)
 - Create a new ClickUp task if none exists
 - Generate a client-facing one-pager
+
+---
+
+## Walk-Through (On Demand)
+
+The walk-through can be generated at any time — not just at spec creation. Trigger phrases:
+
+- "show me the walk-through"
+- "print the walk-through"
+- "walk-through for this spec"
+- "how do we present this POC?"
+
+When triggered, generate:
+
+| Step | User Does | App Does | Talking Point |
+|------|-----------|----------|---------------|
+| 1 | [What user does] | [What app does] | [Value statement for the room] |
+| ... | | | |
+
+5–10 steps. Each talking point should be one sentence, written for the person presenting — not technical. The last step should always close toward the renewal or next action: *"This is what Year 2 looks like. Three use cases in 90 days."*
+
+The walk-through is never part of the ClickUp task description — it's a separate output for the presenter.
 
 ---
 
@@ -197,6 +228,8 @@ Then offer:
 - **Never create subtasks** — one task, all content in the description
 - **Never leave Section 8 as a placeholder** — write real message + real response
 - **Never ask questions already answered by the sources**
+- **Never auto-generate the walk-through** — always ask first
+- **Never include the walk-through in the ClickUp task description** — it's a separate presenter output
 
 ---
 
@@ -206,6 +239,7 @@ Then offer:
 - [ ] Source summary stated before proceeding
 - [ ] Client website fetched (Section 0 + Section 12 in one pass)
 - [ ] App type classified
+- [ ] Infrastructure question asked — client infra details provided or go-live marked TBD
 - [ ] At most 3 questions asked if critical info still missing
 - [ ] Section 0 filled — company, industry, size, tech environment, audience, relationship context
 - [ ] Sections 1–11 complete, no placeholders
@@ -214,8 +248,10 @@ Then offer:
 - [ ] Mock/Real System Map — all systems, "What Changes on Go-Live" column filled
 - [ ] Environment table — dev (Shakudo GCP) + go-live (client env)
 - [ ] Shakudo Platform Map complete
-- [ ] POC Build Brief — env vars, build checklist, acceptance criteria, go-live requirements, POC walk-through
+- [ ] POC Build Brief — env vars, build checklist, acceptance criteria, go-live requirements
 - [ ] Full spec shown before any ClickUp update offered
+- [ ] Walk-through offered as optional (not auto-generated)
+- [ ] Walk-through NOT included in ClickUp task description (separate output only)
 - [ ] Output written into ONE ClickUp task, no subtasks
 
 ---

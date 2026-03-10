@@ -256,6 +256,14 @@ The walk-through is never part of the ClickUp task description — it's a separa
 
 ---
 
+## Integration
+
+- **ClickUp** — Create demo build task with subtasks from the build brief
+- **Mattermost** — Share spec in client channel or #proserve for review
+- **kaji-poc-deploy** — Phase 2: deploy the spec → `@kaji deploy this spec: [ClickUp URL]`
+- **Kaji Agentic Engineering Estimator** — Add this POC as a use case for pricing
+- **Kaji Client Onboarding** — After demo approval, use onboarding skill to plan deployment
+
 ## References
 
 - [App Spec Template](./assets/app-spec-template.md) — 13-section spec (sections 0–12)

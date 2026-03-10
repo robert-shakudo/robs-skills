@@ -2,6 +2,19 @@
 
 Custom Kaji AI Agent skills for client onboarding, deployment, sales, and workflow automation.
 
+## POC Workflow
+
+The core skill chain for building and deploying client POCs:
+
+```
+kaji-poc-spec-builder  →  spec in ClickUp
+kaji-poc-deploy        →  running app on dev.hyperplane.dev (~2 min)
+kaji-agentic-engineering-estimator  →  priced engagement
+kaji-client-onboarding →  full deployment plan
+```
+
+---
+
 ## Skills
 
 ### kaji-agentic-engineering-estimator
@@ -21,6 +34,37 @@ openskills read kaji-agentic-engineering-estimator
 5. Outputs savings % and timeline estimates
 
 **Output:** Scoped estimate with use case breakdown, dev stream pricing, traditional comparison, and engagement recommendation.
+
+---
+
+### kaji-poc-deploy
+
+**Phase 2 companion to `kaji-poc-spec-builder`.** One command — reads a ClickUp spec, deploys all components to Shakudo with mocks, returns live URLs. Same code goes live when you hand it real credentials.
+
+**Usage:**
+```
+openskills read kaji-poc-deploy
+```
+
+**Trigger phrases:**
+```
+@kaji deploy the gallo POC
+@kaji go live with https://app.clickup.com/t/86afvjudd
+@kaji spin up the HR resume demo
+@kaji deploy all POCs
+@kaji take campbell live — ANTHROPIC_API_KEY=sk-ant-real-...
+```
+
+**What it does:**
+1. Resolves target from ClickUp task ID, POC name, or "the spec we just built"
+2. Checks `demos` git server sync + existing deployments
+3. Creates all Shakudo microservices with correct `script` paths
+4. Polls to `running`, surfaces logs on failure
+5. Returns live URLs with mock/real status + credential upgrade path
+
+**4 POCs pre-registered** (HR Resume, Gallo Freight, Reagan NLP-SQL, Campbell Ops) with exact deployment configs, env var maps, and run.sh paths in `references/poc-registry.md`.
+
+**Output:** Live URLs + "to go live, set: [ENV_VAR] → [what to provide]"
 
 ---
 

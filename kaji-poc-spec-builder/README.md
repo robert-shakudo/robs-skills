@@ -1,132 +1,86 @@
 # kaji-poc-spec-builder
 
-**Convert any client use case into a specced, demoable application — in one Kaji conversation.**
+**Convert any client use case into a complete, buildable POC spec — in one Kaji conversation.**
 
-This skill helps you go from "a client told me they have a problem with X" to a complete app specification, demo architecture, mock/real system map, and engineer-ready build brief. Every output is designed to be shown to the client as proof of what you started with — and a clear path to production.
-
----
-
-## The Core Idea
-
-Every demo we build follows the same pattern:
-
-1. **Build it fast with mocks** — Kaji + Shakudo platform + realistic fake data. Demo-ready in 1–5 days.
-2. **Show the client something real** — they see a working app, not slides.
-3. **Swap mocks for real systems** — when the client provides credentials, one config change connects the live system. No rebuild.
-
-This skill generates everything you need to execute that pattern.
+Takes a use case (from ClickUp, Fireflies, Notion, Mattermost, or plain text) and produces a full 13-section app specification, mock/real system map, Shakudo platform map, and POC build brief — complete enough for an engineer or agent to start building immediately.
 
 ---
 
-## How to Use It
+## The Core Pattern
 
-### Step 1 — Trigger the skill
-
-Start a conversation with Kaji and describe the use case. You can be as rough as you want:
-
-```
-@kaji build me a POC spec for [client] — they want to [use case description]
-```
-
-```
-@kaji spec this out: [paste use case notes, email, or meeting summary]
-```
-
-```
-@kaji what would we build for a client that needs to [problem]?
-```
-
-### Step 2 — Answer up to 3 clarifying questions (if asked)
-
-Kaji will ask at most 3 questions if critical info is missing:
-- Who is the primary user?
-- What are they doing manually today?
-- What would a successful demo look like?
-
-If you don't know, say so — Kaji will make reasonable assumptions and state them clearly.
-
-### Step 3 — Choose your output mode
-
-Kaji will ask (or you can specify upfront):
-
-- **Full Spec + POC Architecture** — complete spec, mock/real map, Shakudo platform map, build brief
-- **Quick Spec (Jira-friendly)** — compact version for ClickUp tasks or internal alignment
-
-### Step 4 — Receive the output
-
-Kaji delivers in one pass:
-
-1. **App Spec** — 11 sections including a concrete example interaction
-2. **Mock/Real System Map** — every system tagged ✅ Available / 🟡 Mocked / 🔴 Needs Build
-3. **Shakudo Platform Map** — which Kaji, n8n, microservice, and platform components are used
-4. **Demo Build Brief** — components to build, mock data needed, build time estimate, closest existing demo to fork
-
-### Step 5 — Act on it
-
-At the end, Kaji offers:
-- Create a ClickUp task for the demo build
-- Generate a client-facing one-pager
-- Add this as a use case to the Agentic Engineering Estimator for pricing
+1. **Build in Shakudo dev env (GCP)** — POC is pre-built before any client meeting using mocked systems and realistic fake data
+2. **Show a working application** — client sees a real app, not slides
+3. **Deploy to client's env on go-live** — same app, one config change per system, no rebuild
 
 ---
 
-## Example Conversations
+## How to Use
 
-### Rough use case from a sales call
-```
-@kaji spec this out — we were talking to a logistics company and they 
-said their ops team spends 3 hours a day triaging freight exceptions 
-across 3 different systems. They're on SAP and use a TMS called project44.
-```
+**Give Kaji a source** — as rough as you want:
 
-### From meeting notes or an email
 ```
-@kaji build a POC spec for Huntington — pasting the use case from the 
-discovery call: [paste]
+@kaji build me a spec for [client] — [use case description]
 ```
-
-### From a vague idea
 ```
-@kaji what would we build for a manufacturing client that wants to know 
-why their production line keeps going down?
+@kaji spec this out: [paste meeting notes / email / problem description]
+```
+```
+@kaji build a spec from this ClickUp task: https://app.clickup.com/t/[id]
+```
+```
+@kaji rewrite this into a spec: [Notion URL / Mattermost thread / Fireflies meeting]
 ```
 
-### Quick Jira spec
-```
-@kaji quick spec for an HR resume screening assistant for internal demo
-```
+**Kaji will:**
+1. Read all provided sources (ClickUp, Mattermost, Notion, Fireflies) before asking anything
+2. Fetch the client's website for company background (Section 0) and brand colors (Section 12)
+3. Ask at most 3 questions if critical info is still missing
+4. Build the full spec and show it
+5. Offer to write it into one ClickUp task (no subtasks)
 
 ---
 
-## What You Get (Full Mode)
+## What You Get
 
 ```
-App Spec
-├── Overview (name, purpose, users, problem)
-├── What the App Does
-├── Core Experience (step-by-step user flow)
-├── Key Capabilities (3–6, in plain language)
-├── Intelligence Layer (LLM, agent behavior, tools)
-├── Systems Connected (with mock status)
-├── Example User Journey
-├── Example Interaction (real message + response)
-├── What Makes This Valuable
-├── Scope for Demo (in / out)
-└── Future Enhancements
+Section 0   Company Introduction
+Section 1   Overview
+Section 2   What the App Does
+Section 3   Core Experience
+Section 4   Key Capabilities (App Functions)
+Section 5   Intelligence Layer (LLM, agent, tools)
+Section 6   Systems Connected (with mock status)
+Section 7   Example User Journey
+Section 8   Example Interaction (real message + response)
+Section 9   What Makes This Valuable
+Section 10  Scope for POC
+Section 11  Future Enhancements
+Section 12  Design, UI & UX (brand colors, components, layout)
 
-Mock / Real System Map
-├── System | Status | Mock Strategy | Real Integration Path
+Mock/Real System Map
+  ├── System | Status | Mock Strategy | Real Integration | What Changes on Go-Live
+  └── Environment table: POC (Shakudo dev) vs Go-Live (client env)
 
 Shakudo Platform Map
-├── Capability | Shakudo Component | Role in Demo
+  └── App Function | Shakudo Component | Role
 
-Demo Build Brief
-├── 5-minute demo script
-├── Components to build + build time
-├── Mock data requirements
-├── Go-live requirements (what client needs to provide)
-└── Closest existing demo to fork
+POC Build Brief
+  ├── Environment vars (dev block + go-live block)
+  ├── Build checklist (checkboxes)
+  ├── Acceptance criteria (checkboxes)
+  ├── Go-live requirements from client (checkboxes)
+  └── POC walk-through (5–10 steps for the presenter)
 ```
+
+---
+
+## Key Rules
+
+- **POC is always pre-built** — never described as a live build
+- **One ClickUp task, no subtasks** — the description IS the full spec
+- **Spec shown first** — Kaji never offers to update ClickUp before the spec is on screen
+- **Research before questions** — Kaji reads all available sources before asking anything
+- **Never assume the tech stack** — always checks Notion/Mattermost for actual client infra
 
 ---
 
@@ -134,50 +88,21 @@ Demo Build Brief
 
 ```
 kaji-poc-spec-builder/
-├── SKILL.md                                  ← Kaji reads this to run the skill
+├── SKILL.md                                  ← Kaji execution logic
 ├── README.md                                 ← This file
 ├── assets/
-│   ├── app-spec-template.md                  ← 11-section spec template
+│   ├── app-spec-template.md                  ← 13-section spec template (sections 0–12)
 │   └── demo-architecture-template.md         ← Mock/real map + build brief format
 └── references/
-    ├── shakudo-platform-capabilities.md       ← Kaji, n8n, microservice, Dremio catalog
-    ├── mock-patterns.md                       ← Mock strategies by system type (CRM, ERP, DB...)
-    └── demo-library.md                        ← Existing demos to fork (Gallo, Reagan, HR, Campbell)
+    ├── shakudo-platform-capabilities.md       ← Kaji, n8n, microservice, Dremio, Arize Phoenix
+    ├── mock-patterns.md                       ← Mock strategies by system type
+    └── demo-library.md                        ← Existing POCs to fork (Gallo, Reagan, HR, Campbell, Dynex)
 ```
-
----
-
-## The Mock/Real Toggle
-
-Every mocked system in the output follows this principle:
-
-> *"We built this with mocked Salesforce. You give us credentials, we flip one environment variable, and it connects to your live system. No rebuild."*
-
-The demo architecture is designed so the swap is a config change, not a code change. This is explicit in every mock/real map the skill generates.
-
----
-
-## Tips
-
-- **Give more context = better spec** — paste meeting notes, emails, or a problem description. The richer the input, the tighter the output.
-- **State the client's existing systems if you know them** — it changes which components are ✅ available vs 🟡 mocked.
-- **Use the Demo Library** — before building from scratch, the skill checks existing demos (Gallo, Reagan, HR Resume, Campbell) and tells you what to fork.
-- **Quick Spec for internal alignment** — use Jira mode to create a ClickUp task first, then expand to Full Spec when the client is interested.
-
----
-
-## Installation
-
-This skill is in the `robs-skills` repository. To install or update:
-
-1. Ensure the `robs-skills` git server is synced on your Shakudo instance
-2. Install `kaji-poc-spec-builder` from the Skills Marketplace
-3. Kaji will have the skill available immediately in any thread
 
 ---
 
 ## Related Skills
 
-- **kaji-agentic-engineering-estimator** — Once you have a spec, price the engagement
-- **kaji-client-onboarding** — After the demo is approved, plan the full deployment
-- **rob-weekly-proserve-update** — Track demo builds and client activity in weekly reports
+- **kaji-agentic-engineering-estimator** — Price the engagement from the spec
+- **kaji-client-onboarding** — Plan the full deployment after the POC is approved
+- **rob-weekly-proserve-update** — Track POC builds and client activity in weekly reports

@@ -5,12 +5,11 @@ license: MIT
 compatibility: opencode
 metadata:
   author: robert-shakudo
-  version: "1.3"
+  version: "1.4"
   category: solutions-engineering
   tags:
     - poc
     - spec
-    - demo
     - solutions-engineering
     - shakudo
     - kaji
@@ -18,305 +17,213 @@ metadata:
 
 # Kaji POC Spec Builder
 
-Convert a client use case into a complete POC specification, demo architecture, and build brief — in one pass. The output shows what we're building, what's mocked vs real, which Shakudo platform components are used, and how an engineer starts building today.
+Convert a client use case into a complete POC specification that an engineer or agent can build from immediately. Output: company background, full app spec (sections 0–12), mock/real system map, Shakudo platform map, and POC build brief — all in one ClickUp task, no subtasks.
 
-**Core premise**: We can demo a working application immediately using Kaji, the Shakudo platform, and mocked system connections. When the client is ready, the mocks are replaced with real integrations — no rebuild required.
+**Core principle**: The POC is always pre-built before any client meeting. It runs in Shakudo's dev environment (GCP). On go-live, the same app deploys to the client's environment. The spec must be complete enough to build from — not just describe.
+
+**Environment rule**: POC built on `dev.hyperplane.dev` (Shakudo GCP). Go-live = deploy same app into client's infrastructure (Azure, AWS, on-prem). Always note both in the spec.
+
+---
 
 ## When to Activate
 
 - "Build me a spec for [use case]"
-- "I have a client that needs [X], what would we build?"
 - "Turn this use case into a POC"
-- "What would this look like as a demo?"
-- "Create a POC brief for [client]"
-- "Spec this out for me"
-- "What Shakudo components would we use for [problem]?"
-- "Build a spec from this ClickUp task / Fireflies call / Notion page / document"
+- "Spec this out for [client]"
+- "What would we build for [client/problem]?"
+- "Build a spec from this ClickUp task / Fireflies call / Notion page / Mattermost thread"
 - "Rewrite this into a spec"
-- "Use [source] to build the spec"
-- Any client use case that needs to be converted into something demoable
+- Any client use case that needs to be converted into something buildable
+
+---
 
 ## Two Modes
 
-**1. Full Spec + POC Architecture** (default)
-Full app specification, mock/real system map, Shakudo platform map, and demo build brief. Use for new client opportunities, pre-sales demos, or when scoping a new engagement.
+**Full Spec** (default) — Complete spec (sections 0–12) + mock/real map + Shakudo platform map + POC build brief. Use for any new client opportunity or engagement.
 
-**2. Quick Spec (Jira-Friendly)**
-Compact spec for alignment, ClickUp tasks, or internal handoffs. Use when you need fast written alignment without the full architecture output.
+**Quick Spec** — Compact version (sections 0, 1, 4, 10 only) for fast internal alignment. Use when speed matters more than completeness.
 
-Ask: "Do you want the full POC spec and architecture, or a quick Jira-friendly spec?"
-
-If not specified, default to **Full Spec + POC Architecture**.
+Ask if not specified. Default to **Full Spec**.
 
 ---
 
 ## Execution Flow
 
-### Phase 0: Read Source (if a source is provided)
+### Phase 0: Read All Sources First
 
-**This phase runs BEFORE intake when the user points to an existing document, task, or transcript.**
+**Before asking any questions, read everything available.**
 
-If the user provides any of the following, read it first before asking any questions:
+Check in this order:
+1. **ClickUp task** (if URL/ID provided) — `get_task`: description, comments, subtasks
+2. **Mattermost channel/thread** (if referenced) — `get_thread` or `get_channel_messages`: context, decisions, explicit corrections
+3. **Notion page** (if referenced) — `retrieve-a-page` + `get-block-children`: architecture docs, client overviews, security/infra details
+4. **Fireflies meeting** (if referenced) — `fireflies_get_summary`: pain points, systems, agreed scope
+5. **Pasted text** — use as-is
 
-| Source | How to Read It | What to Extract |
-|--------|---------------|-----------------|
-| ClickUp task name or ID | `get_task` tool | Task name, description, comments, subtasks, assignees |
-| Fireflies meeting / transcript | `fireflies_get_summary` or `fireflies_search` | Meeting summary, action items, systems mentioned, problems discussed |
-| Notion page URL or name | `notionApi_API-retrieve-a-page` + `API-get-block-children` | Page content, tables, bullet lists |
-| Pasted text | Read directly | Use as-is — treat it as raw use case input |
-| Any URL | Web fetch | Extract relevant content from the page |
+Extract: client name, problem, tech stack, user roles, scope decisions, and any explicit corrections (e.g., "not GCP, it's Azure", "pre-built not live build").
 
-**Extraction rules:**
-- Pull out: client name, problem statement, systems mentioned, user roles, desired outcomes, any scope notes
-- If the source is a meeting transcript, look for: pain points stated by the client, systems they use, what they asked for, what was agreed
-- If the source is a ClickUp task, look for: task description, any attached requirements, comments with additional context
-- Treat everything extracted as input to Phase 1 — skip questions you already have answers to
-
-**After reading the source**, state what you found in 2–3 sentences:
-> "I read [source]. Here's what I'm working with: [brief summary of extracted context]. Building the spec now."
-
-Then proceed directly to Phase 2 (skip or shorten Phase 1 based on what was extracted).
+After reading, summarize what you found in 2–3 sentences. Then proceed — skip questions already answered by the sources.
 
 ---
 
 ### Phase 1: Intake
 
-Ask the user for:
-- **Client name** (optional — use "Client" if not provided)
-- **Use case description** — what is the user/business trying to do?
-- **Known systems** — what tools, databases, or platforms are involved? (optional)
-- **Demo urgency** — when does this need to be showable?
+If critical info is still missing after reading all sources, ask **at most 3 questions**:
+1. Who is the primary user?
+2. What are they doing manually today that this replaces?
+3. What would make this POC successful for the client?
 
-**If client name is provided, research the company before proceeding:**
-1. Fetch the client's website (homepage or About page)
-2. Extract: industry, what they do, approximate size, technology environment signals
-3. Pre-fill Section 0 (Company Introduction) from this research
-4. Note any infrastructure posture clues relevant to the demo (air-gapped, cloud-native, regulated, etc.)
-5. This research also informs Section 12 (brand colors) — do both in one fetch
+Make reasonable assumptions for anything still unknown. State them clearly.
 
-If the client can't be found or the website gives no useful context, note `[ASSUMED]` and proceed.
+**Research the client** (if name is known):
+1. Fetch client website (homepage + About page)
+2. Extract for **Section 0**: industry, what they do, size, tech environment
+3. Extract for **Section 12**: brand colors (CSS vars, Elementor globals), font, logo URL
+4. Do both in one pass — single fetch
 
-If the use case is too vague to spec, ask **up to 3 clarifying questions**:
-1. Who is the primary user of this application?
-2. What are they currently doing manually or struggling with?
-3. What outcome would make this demo successful to the client?
-
-Do NOT ask more than 3 questions before proceeding with reasonable assumptions. State your assumptions clearly.
-
-**Classify the app type** (choose the closest):
-- **Operational Assistant** — agent that helps users investigate, decide, or act on real-time data
-- **Data & Analytics** — NLP-to-SQL, dashboards, trend analysis, report generation
+**Classify the app type:**
+- **Operational Assistant** — agent helps users investigate, decide, or act on real-time data
+- **Data & Analytics** — NLP-to-SQL, report generation, trend analysis
 - **Workflow Automation** — event-triggered pipelines, approval flows, multi-step orchestration
 - **Knowledge Assistant** — RAG over documents, policies, internal knowledge bases
-- **Multi-Agent System** — coordinated agents handling complex multi-step tasks
+- **Multi-Agent System** — coordinated agents for complex multi-step tasks
 
 ---
 
-### Phase 2: Generate the App Spec
+### Phase 2: Build the Spec
 
-Fill out the full app specification using [App Spec Template](./assets/app-spec-template.md).
+Fill out all 13 sections using [App Spec Template](./assets/app-spec-template.md).
 
-Start with **Section 0 — Company Introduction**. This section comes first and sets the context for everyone who reads the spec. Fill it out before writing any capability or technical content.
-
-Key rules for Section 0:
-- Write it so a Shakudo team member picking this up for the first time immediately understands the client
-- Include the technology environment — this shapes which systems are ✅ available vs 🟡 mocked
-- The audience field tells the reader how much technical depth to expect in the rest of the spec
-
-Key rules for filling the spec:
-- **Write in plain language** — the spec should be readable by a client, not just engineers
-- **Intelligence Layer is mandatory** — always describe LLM usage, agent behavior, and tools/actions
-- **Example Interaction must be concrete** — write a real message + response, not a placeholder
-- **Scope section must be honest** — clearly separate what the demo includes from what it doesn't
-- **Never leave a section as a placeholder** — if you don't have info, make a reasonable assumption and note it
+Key rules:
+- **Section 0 first** — establishes who the client is before any technical content
+- **No placeholders** — if info is missing, state your assumption and mark `[ASSUMED]`
+- **Section 8 (Example Interaction) is mandatory** — write a real message and real response, no templates
+- **Section 10 (Scope) must be honest** — what's in this POC, what's not, what's Year 2
+- **App Functions** — name capabilities as what the app does, not as presentation moments
 
 ---
 
 ### Phase 3: Mock/Real System Map
 
-For each system mentioned or implied in the spec:
+For every system mentioned or implied, produce this table:
 
-1. Identify the system (CRM, ERP, ticketing, monitoring, database, etc.)
-2. Determine its **demo status**:
-   - ✅ **Available Now** — Shakudo has a live integration or MCP for this
-   - 🟡 **Mockable** — No live access, but realistic mock can be built in 1-2 days
-   - 🔴 **Needs Custom Build** — Requires new integration or client credentials (5-10 days)
-3. Define the **mock strategy** — how will we fake this for the demo?
-4. Define the **real integration path** — what does "going real" look like?
+| System | Status | Mock Strategy | Real Integration Path | What Changes on Go-Live |
+|--------|--------|---------------|----------------------|--------------------------|
+| [System] | ✅ / 🟡 / 🔴 | [How we fake it] | [Real connection] | [Env var / config field] |
 
-Format as a table:
+Status:
+- ✅ **Available** — live integration or public data, no mock needed
+- 🟡 **Mocked** — realistic fake, swappable with one config change
+- 🔴 **Needs Build** — new connector required, estimate separately
 
-| System | Demo Status | Mock Strategy | Real Integration Path |
-|--------|-------------|---------------|----------------------|
-| [System] | ✅ / 🟡 / 🔴 | [How we mock it] | [How we connect for real] |
+Always include the environment table:
 
-See [Mock Patterns](./references/mock-patterns.md) for standard mock strategies by system type.
+| Phase | Environment |
+|-------|-------------|
+| Build & POC | `dev.hyperplane.dev` (Shakudo GCP) |
+| Go-Live | [Client's environment — cloud/auth/infra specifics] |
 
 ---
 
 ### Phase 4: Shakudo Platform Map
 
-Map the spec's capabilities to the Shakudo platform components that deliver them. See [Shakudo Platform Capabilities](./references/shakudo-platform-capabilities.md) for the full catalog.
-
-Format as a table:
-
-| Capability (from spec) | Shakudo Component | Notes |
-|------------------------|-------------------|-------|
-| [Capability] | [Component] | [Any relevant notes] |
-
-Common mappings:
-- Natural language interface → **Kaji (chat agent)**
-- Tool use / system access → **Kaji MCP skills**
-- Workflow automation → **n8n on Shakudo**
-- API backend → **Shakudo microservice**
-- UI / frontend → **Shakudo microservice (React/Next.js)**
-- Data querying → **Dremio or direct DB via Kaji skill**
-- Document search → **Kaji RAG skill**
+| App Function | Shakudo Component | Role |
+|---|---|---|
+| [Function] | [Kaji / n8n / microservice / Chroma / Arize Phoenix / etc.] | [What it does] |
 
 ---
 
 ### Phase 4b: Design, UI & UX
 
-**Run this phase whenever the spec includes a user-facing interface** (dashboard, web UI, branded frontend). Skip if the only interface is plain Kaji chat with no custom UI.
+Run whenever the POC has a user-facing frontend.
 
-**If the client name or website is known:**
-1. Fetch the client's website (homepage or brand page)
-2. Extract brand CSS — look for Elementor global styles, CSS variables (`--e-global-color-*`), or inline style declarations
-3. Extract: primary color, background/secondary color, accent/alert color, text color, font family
-4. If no CSS is parseable, take a screenshot and extract colors visually
-
-**Fill out Section 12 (Design, UI & UX) of the spec:**
-
-| Field | How to get it |
-|-------|--------------|
-| Primary color | CSS `--e-global-color-primary` or dominant brand color |
-| Background / secondary | CSS `--e-global-color-secondary` or site background |
-| Accent / alert | CSS `--e-global-color-accent` or CTA/button color |
-| Font family | CSS `font-family` or Google Fonts link in `<head>` |
-| Visual tone | Infer from site — dark/light, minimal/editorial, enterprise/consumer |
-
-**Color usage rules (apply these defaults, adjust to context):**
-- Primary color → interactive elements, buttons, active states, highlights, savings counter
-- Background color → page and card backgrounds, nav bar
-- Accent color → critical alerts, error states, P1/P2 incidents, reject buttons
-- White → text on dark backgrounds
-- Font → all text, all weights
-
-**If no website is provided or colors can't be extracted:**
-- Note: `[ASSUMED — client brand colors not confirmed]`
-- Default to a clean dark enterprise palette: `#1A1A2E` background, `#4A90D9` primary, `#E53935` accent
+1. Fetch client website → extract CSS brand colors (font, logo, primary/bg/accent)
+2. If no CSS found, infer from visual inspection and note `[INFERRED]`
+3. Fill Section 12: color palette, usage guide (what each color is used for), page layout, component design
 
 ---
 
-### Phase 5: Demo Build Brief
+### Phase 5: POC Build Brief
 
-Produce a brief that an engineer can start from immediately:
+Must be complete enough for an engineer or agent to start building immediately. Include:
 
-**Build Summary**
-- App type and primary user
-- Core demo flow (what the user does in 5 minutes)
-- Closest existing demo to reference (see [Demo Library](./references/demo-library.md))
+**Environment vars** — two blocks:
+```bash
+# POC (Shakudo dev.hyperplane.dev)
+LLM_ENDPOINT=...
 
-**Components Needed**
-- List each Shakudo component and its role in the demo
+# Go-Live (Client env)
+LLM_ENDPOINT=...
+```
 
-**Mock Data Needed**
-- What fake data needs to be created for the demo
-- Suggested format (JSON, CSV, SQL seed, hardcoded API responses)
+**Build checklist** (checkboxes):
+- [ ] [Atomic build task]
 
-**Estimated Build Time**
-- Use the ranges below. Round UP when unsure.
+**Acceptance criteria** (checkboxes):
+- [ ] [Specific, verifiable condition]
 
-| Demo Complexity | Estimated Build Time |
-|-----------------|----------------------|
-| Simple (1 system, chat UI, mocked data) | **1–2 days** |
-| Medium (2–3 systems, workflow + UI) | **3–5 days** |
-| Complex (multi-agent, multiple mocked systems, polished UI) | **1–2 weeks** |
+**Go-live requirements from client** (checkboxes):
+- [ ] [What the client must provide]
 
-**Go-Live Requirements**
-- What the client needs to provide to replace mocks with real systems
-- Which Shakudo integrations to enable
-- Any credential or access requirements
+**POC walk-through** (5–10 steps, part of the spec):
+
+| Step | User Does | App Does | Talking Point |
 
 ---
 
 ## Output Format
 
-**SHOW-FIRST RULE: Always deliver the full spec output before offering to update or write anything. Never ask "should I update the ClickUp task?" before the spec is on screen. The user reads the spec first, then decides what to do with it.**
+**SHOW-FIRST RULE**: Display the full spec before offering any ClickUp update. Never ask "should I update the ticket?" before the spec is on screen.
 
-Deliver the output in this order:
+Deliver in this order:
+1. Full spec (sections 0–12)
+2. Mock/Real System Map + environment table
+3. Shakudo Platform Map
+4. POC Build Brief
 
-1. **App Spec** (full or Jira-friendly based on mode)
-2. **Mock/Real System Map** (table)
-3. **Shakudo Platform Map** (table)
-4. **Demo Build Brief**
-5. **Next Steps** — only after the full output is shown, offer to:
-   - Update the ClickUp task with this spec (if a task was the source)
-   - Create a new ClickUp task for the demo build
-   - Generate a client-facing one-pager
-   - Start building (if on Shakudo platform with access)
-   - Add this demo to the estimator as a use case
-
-> Never bundle the offer to update a ticket into the spec output itself. Show everything first. Offer actions after.
+Then offer:
+- Update the ClickUp task with this spec (one task, no subtasks — description IS the full spec)
+- Create a new ClickUp task if none exists
+- Generate a client-facing one-pager
 
 ---
 
-## Practical Guidance
-
-- **Lead with the demo, not the spec** — the spec supports the demo; always describe what the client will *see and do* before listing capabilities
-- **Mock everything by default** — assume no system access until proven otherwise
-- **Name the real integration clearly** — the mock/real toggle is a sales tool: "We built this with mocked Salesforce. When you give us credentials, we flip one config and it's live"
-- **Use existing demos as starting points** — check [Demo Library](./references/demo-library.md) before designing from scratch
-- **Kaji is always in the stack** — every demo uses Kaji as the AI layer; the question is how
-- **Always include an Example Interaction** — a concrete message + response is worth more than 10 capability bullets
-
 ## Anti-Patterns
 
-- **Don't offer to update a ticket before showing the spec** — always show the full output first; actions come after
-- Don't write vague capability descriptions — "AI-powered insights" says nothing; "returns the top 3 transfer candidates ranked by days of stock" says everything
-- Don't leave systems as TBD in the mock/real map — pick a mock strategy and move forward
-- Don't spec features out of scope for a demo — keep it tight and demoable in 5 minutes
-- Don't design a brand-new architecture if an existing demo is 80% of the way there
-- Don't skip the Example Interaction — it anchors everything else
-- Don't ask questions you already have answers to from the source — if you read a ClickUp task with a full description, go straight to building the spec
+- **Never offer to update ClickUp before showing the spec**
+- **Never assume the tech stack** — check Notion and Mattermost first; client infra is often different from what's in the original task
+- **Never use "demo" language** — it's a POC, an application, a build
+- **Never describe a live build** — the POC is always pre-built; the client sees a working app
+- **Never create subtasks** — one task, all content in the description
+- **Never leave Section 8 as a placeholder** — write real message + real response
+- **Never ask questions already answered by the sources**
 
-## Error Handling
-
-- Use case too vague → ask 3 clarifying questions, then proceed with stated assumptions
-- No systems identified → default to mocked CRM + mocked ticketing system as baseline, note assumptions
-- Demo urgency < 2 days → flag which components can be built in time, push complex parts to v2
-- Client already has Shakudo access → skip mocking for any system with an active MCP integration
+---
 
 ## Execution Checklist
 
-- [ ] Source read first (if ClickUp task / Fireflies / Notion / pasted text provided)
-- [ ] Extracted context summarized before proceeding
-- [ ] Client name and use case captured
-- [ ] Section 0 (Company Introduction) filled — company background, size, tech environment, audience for brief
+- [ ] All sources read (ClickUp / Mattermost / Notion / Fireflies / pasted text)
+- [ ] Source summary stated before proceeding
+- [ ] Client website fetched (Section 0 + Section 12 in one pass)
 - [ ] App type classified
-- [ ] Up to 3 clarifying questions asked (if needed — skip questions already answered by source)
-- [ ] Full app spec generated using app-spec-template.md
-- [ ] Intelligence layer section filled out (LLM usage, agent behavior, tools)
-- [ ] Example Interaction written (concrete, not placeholder)
-- [ ] Scope section is clear (in/out)
-- [ ] Mock/Real System Map generated (all systems covered)
-- [ ] Shakudo Platform Map generated
-- [ ] Design/UI/UX section filled (if app has a frontend — fetch brand colors from client website)
-- [ ] Demo Build Brief produced with estimated build time
-- [ ] **Full spec shown to user before any ticket update is offered**
-- [ ] Next steps offered after output is displayed (ClickUp update, one-pager, build)
+- [ ] At most 3 questions asked if critical info still missing
+- [ ] Section 0 filled — company, industry, size, tech environment, audience, relationship context
+- [ ] Sections 1–11 complete, no placeholders
+- [ ] Section 8 — real message + real response written
+- [ ] Section 12 — brand colors, font, logo, component design
+- [ ] Mock/Real System Map — all systems, "What Changes on Go-Live" column filled
+- [ ] Environment table — dev (Shakudo GCP) + go-live (client env)
+- [ ] Shakudo Platform Map complete
+- [ ] POC Build Brief — env vars, build checklist, acceptance criteria, go-live requirements, POC walk-through
+- [ ] Full spec shown before any ClickUp update offered
+- [ ] Output written into ONE ClickUp task, no subtasks
 
-## Integration
-
-- **ClickUp** — Create demo build task with subtasks from the build brief
-- **Mattermost** — Share spec in client channel or #proserve for review
-- **Kaji Agentic Engineering Estimator** — Add this POC as a use case for pricing
-- **Kaji Client Onboarding** — After demo approval, use onboarding skill to plan deployment
+---
 
 ## References
 
-- [App Spec Template](./assets/app-spec-template.md) — Full 11-section spec template
-- [Demo Architecture Template](./assets/demo-architecture-template.md) — Mock/real map + build brief format
-- [Shakudo Platform Capabilities](./references/shakudo-platform-capabilities.md) — What Shakudo and Kaji can do
+- [App Spec Template](./assets/app-spec-template.md) — 13-section spec (sections 0–12)
+- [POC Architecture Template](./assets/demo-architecture-template.md) — Mock/real map + build brief format
+- [Shakudo Platform Capabilities](./references/shakudo-platform-capabilities.md) — Kaji, n8n, microservice, Dremio, Arize Phoenix catalog
 - [Mock Patterns](./references/mock-patterns.md) — Standard mock strategies by system type
-- [Demo Library](./references/demo-library.md) — Existing POCs to reference and reuse
+- [POC Library](./references/demo-library.md) — Existing POCs to fork (Gallo, Reagan, HR Resume, Campbell, Dynex)

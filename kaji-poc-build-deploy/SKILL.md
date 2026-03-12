@@ -381,15 +381,80 @@ shakudo-platform_createMicroservice({
 
 ---
 
-## Scale Down / Teardown
+## Stop / Teardown
+
+### Trigger Phrases
+
+- "stop the [name] POC"
+- "shut down the [name] services"
+- "scale down [name]"
+- "pause the [name] POC"
+- "take down everything"
+- "stop all running POCs"
+- "delete the [name] POC" (only for full delete — confirm first)
+
+### Step 1 — Find the service IDs
 
 ```javascript
-// Scale to zero (default — preserves config)
-shakudo-platform_scaleService({ id: "[id]", newReplicas: 0 })
-
-// Full delete (only if user says "delete" or "remove permanently")
-shakudo-platform_deleteMicroservice({ id: "[id]", confirm: true })
+// Search by POC name
+shakudo-platform_searchMicroservice({ searchTerm: "[poc-name]" })
+// e.g. "dynex-mbs" returns dynex-mbs-api + dynex-mbs-ui
 ```
+
+### Step 2 — Scale to zero (default)
+
+Scaling to zero stops the pods but **preserves the service config**. The POC can be restarted instantly without rebuilding.
+
+```javascript
+// Stop one service
+shakudo-platform_scaleService({ id: "[service-id]", newReplicas: 0 })
+
+// For multi-service POCs — stop all services found in Step 1
+// Run for each service ID returned by the search
+```
+
+After scaling to zero, confirm:
+```
+⏹️ [POC name] stopped.
+  [service-1] — scaled to 0 (config preserved)
+  [service-2] — scaled to 0 (config preserved)
+
+To restart: @kaji restart the [name] POC
+To delete permanently: @kaji delete the [name] POC
+```
+
+### Step 3 (optional) — Full delete
+
+Only do this if the user says **"delete"**, **"remove"**, or **"permanently remove"**. Always confirm first:
+
+> "⚠️ This will permanently delete [service-name] and all its config. Are you sure? (yes/no)"
+
+```javascript
+// Only after explicit confirmation
+shakudo-platform_deleteMicroservice({ id: "[service-id]", confirm: true })
+```
+
+### Restart after scale-to-zero
+
+If the service config still exists (was scaled to zero, not deleted):
+
+```javascript
+shakudo-platform_scaleService({ id: "[service-id]", newReplicas: 1 })
+// or
+shakudo-platform_restartService({ id: "[service-id]" })
+```
+
+### Stop all running POCs
+
+When user says "stop everything" or "scale down all POCs":
+
+```javascript
+// Search for each known POC name and scale all to zero
+const pocs = ["dynex-mbs", "gallo", "hr-resume", "reagan", "campbell"]
+// For each: searchMicroservice → get IDs → scaleService to 0
+```
+
+Always list what was stopped and confirm each.
 
 ---
 

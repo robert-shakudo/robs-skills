@@ -340,7 +340,7 @@ Only after smoke tests pass:
 
 Frontend    → https://[name]-ui.dev.hyperplane.dev
 API         → https://[name]-api.dev.hyperplane.dev
-GitHub      → https://github.com/robert-shakudo/[name]
+GitHub      → https://github.com/devsentient/demos/tree/main/[folder]
 ClickUp     → https://app.clickup.com/t/[id]
 
 Running with: mock [systems list]

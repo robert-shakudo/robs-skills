@@ -16,7 +16,7 @@ Complete deployment configuration for all built POCs. Agents read this file to g
 **Client context:** Mountain Capital Partners (internal sales demo)  
 **Category:** Workflow Automation / HR  
 **Notion:** https://www.notion.so/shakudo/Kaji-Demos-318d36b5509080cd84edfa3e5fa4af98  
-**GitHub (source):** https://github.com/robert-shakudo/hr-resume-demo  
+**GitHub (source):** https://github.com/devsentient/demos/tree/main/hr-resume-demo  
 
 ### Services
 
@@ -72,7 +72,7 @@ shakudo-platform_createMicroservice({
 **ClickUp Spec:** `86afvjudd` → https://app.clickup.com/t/86afvjudd  
 **Client context:** E.J. Gallo Winery (supply chain demo)  
 **Category:** Operational Assistant / Workflow Automation  
-**GitHub (source):** https://github.com/robert-shakudo/gallo-freight-exception-hub  
+**GitHub (source):** https://github.com/devsentient/demos/tree/main/gallo-freight-exception-hub  
 
 ### Services
 
@@ -161,7 +161,7 @@ Pre-built workflows already imported to n8n v2 at `https://n8n-v2.dev.hyperplane
 **ClickUp Spec:** `86afrnky0` → https://app.clickup.com/t/86afrnky0  
 **Client context:** Reagan Foundation (nonprofit fundraising demo)  
 **Category:** Data & Analytics  
-**GitHub (source):** https://github.com/robert-shakudo/reagan-nlp-sql-demo  
+**GitHub (source):** https://github.com/devsentient/demos/tree/main/reagan-nlp-sql-demo  
 
 ### Services
 
@@ -220,7 +220,7 @@ shakudo-platform_createMicroservice({
 **ClickUp Spec:** `86afxwcn9` → https://app.clickup.com/t/86afxwcn9  
 **Client context:** Campbell & Company (trading infrastructure demo)  
 **Category:** Operational Assistant / Multi-Agent  
-**GitHub (source):** https://github.com/robert-shakudo/campbell-ops-demo  
+**GitHub (source):** https://github.com/devsentient/demos/tree/main/campbell-ops-demo  
 
 ### Services
 
@@ -280,7 +280,7 @@ shakudo-platform_createMicroservice({
 **ClickUp Spec:** `86ag1jmra` → https://app.clickup.com/t/86ag1jmra
 **Client context:** Dynex Capital — fixed income / MBS portfolio analytics
 **Category:** Data & Analytics / Operational Assistant
-**GitHub (source):** https://github.com/robert-shakudo/dynex-mbs-demo
+**GitHub (source):** https://github.com/devsentient/demos/tree/main/dynex-mbs
 
 ### Services
 

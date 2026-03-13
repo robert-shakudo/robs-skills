@@ -154,12 +154,18 @@ Every new POC MUST match the exact structure of existing demos. No exceptions.
 
 ### Repository Convention
 
+**Single source of truth: `devsentient/demos`**
+
+All POC code lives in the `devsentient/demos` monorepo as a subfolder. No separate per-client repos required.
+
 | Artifact | Pattern | Example |
 |---|---|---|
-| Client GitHub repo | `robert-shakudo/{client}-{type}-demo` | `robert-shakudo/dynex-mbs-demo` |
-| Demos monorepo folder | same name without `-demo` | `devsentient/demos/dynex-mbs` |
+| Demos monorepo folder | `devsentient/demos/{client}-{type}` | `devsentient/demos/dynex-mbs` |
+| Folder name convention | `{client}-{type}` (no `-demo` suffix) | `dynex-mbs`, `gallo-freight-exception-hub` |
 | Shakudo service names | `{client}-{type}-api`, `{client}-{type}-ui` | `dynex-mbs-api`, `dynex-mbs-ui` |
 | Live URLs | `{service-name}.dev.hyperplane.dev` | `dynex-mbs-ui.dev.hyperplane.dev` |
+
+> **Note:** If a separate per-client repo exists (e.g. `robert-shakudo/dynex-mbs-demo`), it can be kept private as an archive — but it is NOT the deployment source. `devsentient/demos` is the only repo the Shakudo platform reads from.
 
 ### Required File Structure (every demo must have ALL of these)
 
@@ -206,12 +212,7 @@ npx serve -s dist -l 8787
 ### Git commit order
 
 ```bash
-# 1. Push to client repo first
-git init && git add -A && git commit -m "feat: initial build — [POC name]"
-git remote add origin https://${GH_TOKEN}@github.com/robert-shakudo/{name}.git
-git push -u origin main
-
-# 2. Mirror to devsentient/demos
+# Single repo: push directly to devsentient/demos
 git clone --depth 1 https://${GH_TOKEN}@github.com/devsentient/demos.git /tmp/demos-build
 cp -r /tmp/{build-dir} /tmp/demos-build/{folder-name}/
 cd /tmp/demos-build

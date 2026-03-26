@@ -1,390 +1,325 @@
 # POC Registry
 
-Complete deployment configuration for all built POCs. Agents read this file to get exact service names, paths, ports, and env vars before deploying.
+Canonical deployment definitions for the built-in POC library.
 
-**Platform defaults (apply to all unless overridden):**
-- Git server: `demos` (devsentient/demos, clones to `/tmp/git/monorepo/`)
-- Environment: `basic-ai-tools-small`
-- Branch: `main`
-- Working dir: `/tmp/git/monorepo/`
+Use this file with `kaji-poc-build-deploy` and `shakudo-microservice-lite` to recreate services safely and consistently.
+
+---
+
+## Global defaults
+
+- **Git server**: resolve from repo remote; the demos monorepo is typically `demos`
+- **Repo mount in container**: `/tmp/git/monorepo`
+- **Branch**: `main`
+- **Pipeline type**: `BASH`
+- **Port**: `8787` unless explicitly overridden
+- **Preferred path pairing for current demos**:
+  - `workingDir: /tmp/git/monorepo/`
+  - `pipelineYamlPath: <demo-folder>/.../run.sh`
+- **Deploy order**:
+  1. API / backend
+  2. UI / frontend
+  3. workers or webhooks
+
+### Lite lifecycle rules
+
+- **Create / inspect / delete** → `shakudo-microservice-lite`
+- **Start after delete** → recreate from this registry
+- **Stop in lite-only mode** → delete after explicit confirmation
+- **Restart in lite-only mode** → delete + recreate after explicit confirmation
+- **Scale-to-zero / preserve config** → only if the full `shakudo-microservice` skill is available
+
+### Standard smoke tests
+
+For every service, verify at least one of:
+- `/health`
+- `/`
+- a key business endpoint from the POC
+
+---
+
+## Registry field reference
+
+Each service definition should provide:
+- `jobName`
+- `subdomain`
+- `jobType`
+- `gitServerName`
+- `branchName`
+- `workingDir`
+- `pipelineYamlPath`
+- `port`
+- `parameters`
+- `deployOrder`
+- `smokeTests`
 
 ---
 
 ## HR Resume Processor
 
-**ClickUp Spec:** `86afrhqxy` → https://app.clickup.com/t/86afrhqxy  
-**Client context:** Mountain Capital Partners (internal sales demo)  
-**Category:** Workflow Automation / HR  
-**Notion:** https://www.notion.so/shakudo/Kaji-Demos-318d36b5509080cd84edfa3e5fa4af98  
-**GitHub (source):** https://github.com/devsentient/demos/tree/main/hr-resume-demo  
+**ClickUp Spec:** `86afrhqxy`
+**Client:** Mountain Capital Partners
+**Category:** Workflow Automation / HR
+**Source:** `devsentient/demos/hr-resume-demo`
 
 ### Services
 
-| Service | Name | Script | Port | Live URL |
-|---|---|---|---|---|
-| Backend + Frontend (monolith) | `hr-resume-demo` | `hr-resume-demo/run.sh` | `8787` | https://hr-resume-demo.dev.hyperplane.dev |
-
-### Deployment Call
-
-```javascript
-shakudo-platform_createMicroservice({
-  name: "hr-resume-demo",
-  userEmail: process.env.USER_EMAIL,
-  environment: "basic-ai-tools-small",
-  gitServer: "demos",
-  branch: "main",
-  port: 8787,
-  script: "hr-resume-demo/run.sh",
-  parameters: []  // no external credentials needed for mock mode
-})
+```yaml
+- jobName: hr-resume-demo
+  subdomain: hr-resume-demo
+  jobType: basic-ai-tools-small
+  gitServerName: demos
+  branchName: main
+  workingDir: /tmp/git/monorepo/
+  pipelineYamlPath: hr-resume-demo/run.sh
+  port: "8787"
+  deployOrder: 1
+  parameters: []
+  smokeTests:
+    - path: /health
+      expected: 200
+    - path: /
+      expected: 200-or-302
 ```
 
-### Mock vs Real Env Vars
+### Mock / real notes
 
-| Variable | Mock (default) | Real (go-live) | Where to get it |
-|---|---|---|---|
-| `PAYCOM_API_KEY` | Not needed — 30 applicants are hardcoded JSON | Real Paycom OAuth token | Paycom Admin → API settings |
-| `GOOGLE_CLIENT_ID` | Emails printed to console only | Google OAuth 2.0 client ID | GCP Console → OAuth consent screen |
-| `GOOGLE_CLIENT_SECRET` | — | Google OAuth secret | GCP Console |
-| `OPENAI_API_KEY` | Not needed — mock scoring engine | Real key for AI scoring | platform.openai.com |
+- Works end to end in mock mode with hardcoded applicants.
+- Real go-live inputs may include `PAYCOM_API_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `OPENAI_API_KEY`.
 
-> **POC default**: No env vars needed. App runs with 30 hardcoded Ski Lift Operator applicants, mock email sends, and rule-based scoring. Fully functional for a demo.
+### Lite lifecycle notes
 
-### Kaji Skill
-
-- Skill name: `hr-resume-processor`
-- Installed at: `/root/.claude/skills/hr-resume-processor/`
-- Trigger: `@kaji show candidates`, `@kaji score all`, `@kaji email the top 5`
-- Config var: `HR_APP_URL=https://hr-resume-demo.dev.hyperplane.dev`
-
-### What the Demo Shows
-
-1. Dashboard opens → 30 Ski Lift Operator applicants in "New" column
-2. Click **Run AI Scoring** → candidates scored in real-time
-3. Select Top 10 (score ≥ 75) → **Send Invites** bulk action
-4. Side panel shows full resume + AI score breakdown
-5. Candidate reply → **AI Reply** drafts the response
+- Start: create `hr-resume-demo`
+- Stop in lite-only mode: delete after confirmation
+- Restart in lite-only mode: delete + recreate
 
 ---
 
 ## Gallo Freight Exception Hub
 
-**ClickUp Spec:** `86afvjudd` → https://app.clickup.com/t/86afvjudd  
-**Client context:** E.J. Gallo Winery (supply chain demo)  
-**Category:** Operational Assistant / Workflow Automation  
-**GitHub (source):** https://github.com/devsentient/demos/tree/main/gallo-freight-exception-hub  
+**ClickUp Spec:** `86afvjudd`
+**Client:** E.J. Gallo Winery
+**Category:** Operational Assistant / Workflow Automation
+**Source:** `devsentient/demos/gallo-freight-exception-hub`
 
 ### Services
 
-| Service | Name | Script | Port | Live URL |
-|---|---|---|---|---|
-| FastAPI backend | `gallo-api` | `gallo-freight-exception-hub/api/run.sh` | `8787` | https://gallo-api.dev.hyperplane.dev |
-| React UI | `gallo-ui` | `gallo-freight-exception-hub/ui/run.sh` | `8787` | https://gallo-ui.dev.hyperplane.dev |
+```yaml
+- jobName: gallo-api
+  subdomain: gallo-api
+  jobType: basic-ai-tools-small
+  gitServerName: demos
+  branchName: main
+  workingDir: /tmp/git/monorepo/
+  pipelineYamlPath: gallo-freight-exception-hub/api/run.sh
+  port: "8787"
+  deployOrder: 1
+  parameters:
+    - key: OPENAI_API_KEY
+      default: sk-mock
+    - key: N8N_WEBHOOK_URL
+      default: ""
+    - key: GALLO_API_KEY
+      default: ""
+  smokeTests:
+    - path: /health
+      expected: 200
+    - path: /exceptions
+      expected: 200
 
-> **Deploy order**: backend first, then UI. The UI bakes in the API URL at build time.
-
-### Deployment Calls
-
-```javascript
-// 1. Backend first
-shakudo-platform_createMicroservice({
-  name: "gallo-api",
-  userEmail: process.env.USER_EMAIL,
-  environment: "basic-ai-tools-small",
-  gitServer: "demos",
-  branch: "main",
-  port: 8787,
-  script: "gallo-freight-exception-hub/api/run.sh",
-  parameters: [
-    { key: "OPENAI_API_KEY", value: "sk-mock" }  // replace with real key for /analyze
-  ]
-})
-
-// 2. Frontend (bakes in API URL)
-// The UI's run.sh hardcodes: VITE_API_URL=https://gallo-api.dev.hyperplane.dev
-// If deploying to a different subdomain, override via parameter:
-shakudo-platform_createMicroservice({
-  name: "gallo-ui",
-  userEmail: process.env.USER_EMAIL,
-  environment: "basic-ai-tools-small",
-  gitServer: "demos",
-  branch: "main",
-  port: 8787,
-  script: "gallo-freight-exception-hub/ui/run.sh",
-  parameters: []  // VITE_API_URL is hardcoded in run.sh to gallo-api.dev.hyperplane.dev
-})
+- jobName: gallo-ui
+  subdomain: gallo-ui
+  jobType: basic-ai-tools-small
+  gitServerName: demos
+  branchName: main
+  workingDir: /tmp/git/monorepo/
+  pipelineYamlPath: gallo-freight-exception-hub/ui/run.sh
+  port: "8787"
+  deployOrder: 2
+  parameters: []
+  smokeTests:
+    - path: /
+      expected: 200-or-302
 ```
 
-### Mock vs Real Env Vars
+### Notes
 
-| Variable | Service | Mock (default) | Real (go-live) | Where to get it |
-|---|---|---|---|---|
-| `OPENAI_API_KEY` | gallo-api | App works without it (pre-seeded exceptions load; `/analyze` returns static mock) | Real key → `/analyze` generates live AI recommendations | platform.openai.com |
-| `N8N_WEBHOOK_URL` | gallo-api | Falls back to direct SAP mock resolve | Real n8n webhook URL on Shakudo n8n instance | n8n admin → Workflow 2 webhook URL |
-| `GALLO_API_KEY` | gallo-api | Not set → no auth required | Set to any secret string → skill must send `X-API-Key` header | Generate any secure string |
-| `VITE_API_URL` | gallo-ui | `https://gallo-api.dev.hyperplane.dev` (hardcoded in run.sh) | Change run.sh if deploying to different URL | Edit `gallo-freight-exception-hub/ui/run.sh` |
+- Deploy `gallo-api` before `gallo-ui`.
+- The UI assumes the API is available at `https://gallo-api.dev.hyperplane.dev` unless the frontend build script is changed.
+- Pre-built n8n workflows are optional for the POC; the app can still tell the story with direct fallback behavior.
 
-> **POC default**: 3 pre-seeded exceptions (Chardonnay, Cab, Moscato) appear on startup. Approve flow works end-to-end with mock SAP/TMS resolution. No API key required.
+### Go-live inputs
 
-### n8n Workflows (optional for POC)
-
-Pre-built workflows already imported to n8n v2 at `https://n8n-v2.dev.hyperplane.dev`:
-- **Workflow 1** (ID: `QTCqVPxK6JCyi5ef`) — Scheduled scan every 6h
-- **Workflow 2** (ID: `5WKFCpCDo0mKzT2n`) — Approval fulfillment webhook
-
-> Not required to activate for POC — exception approval still works via direct API fallback.
-
-### Kaji Skill
-
-- Skill name: `gallo-freight-exception-hub`
-- Located: `gallo-freight-exception-hub/skill/SKILL.md` in demos repo
-- Trigger: `@kaji show freight exceptions`, `@kaji approve exception 1`
-- Config vars:
-  ```
-  GALLO_API_URL=http://hyperplane-service-[id].hyperplane-pipelines.svc.cluster.local:8787
-  GALLO_API_KEY=  (leave blank unless set on API service)
-  ```
-  > Use internal cluster URL (bypasses Istio auth). Get `[id]` from `searchMicroservice`.
-
-### What the Demo Shows
-
-1. Dashboard: 3 open exceptions with severity (🔴🟡🟢), savings, AI recommendation preview
-2. Click any card → detail: root cause, transfer route, cost table, confidence %, deadline
-3. Approve → status moves through: Executing → Confirming → ✅ Resolved
-4. Daily summary bar: exceptions processed, total savings captured
-5. From Mattermost: `@kaji approve exception 1` → same flow, no UI needed
+- `OPENAI_API_KEY`
+- `N8N_WEBHOOK_URL`
+- optional `GALLO_API_KEY`
 
 ---
 
 ## Reagan NLP-to-SQL
 
-**ClickUp Spec:** `86afrnky0` → https://app.clickup.com/t/86afrnky0  
-**Client context:** Reagan Foundation (nonprofit fundraising demo)  
-**Category:** Data & Analytics  
-**GitHub (source):** https://github.com/devsentient/demos/tree/main/reagan-nlp-sql-demo  
+**ClickUp Spec:** `86afrnky0`
+**Client:** Reagan Foundation
+**Category:** Data & Analytics
+**Source:** `devsentient/demos/reagan-nlp-sql-demo`
 
 ### Services
 
-| Service | Name | Script | Port | Live URL |
-|---|---|---|---|---|
-| App (backend + Vanna UI) | `reagan-crm-chat` | `reagan-nlp-sql-demo/run.sh` | `8787` | https://reagan-crm-chat.dev.hyperplane.dev |
-
-> Also deployed as `reagan-nlp-sql-backend` at `https://reagan-nlp-sql-backend.dev.hyperplane.dev` — same app, different subdomain.
-
-### Deployment Call
-
-```javascript
-shakudo-platform_createMicroservice({
-  name: "reagan-crm-chat",
-  userEmail: process.env.USER_EMAIL,
-  environment: "basic-medium",      // needs libpq-dev + heavier dependencies
-  gitServer: "demos",
-  branch: "main",
-  port: 8787,
-  script: "reagan-nlp-sql-demo/run.sh",
-  parameters: [
-    { key: "ANTHROPIC_API_KEY", value: "sk-ant-mock" }  // replace with real key
-  ]
-})
+```yaml
+- jobName: reagan-crm-chat
+  subdomain: reagan-crm-chat
+  jobType: basic-medium
+  gitServerName: demos
+  branchName: main
+  workingDir: /tmp/git/monorepo/
+  pipelineYamlPath: reagan-nlp-sql-demo/run.sh
+  port: "8787"
+  deployOrder: 1
+  parameters:
+    - key: ANTHROPIC_API_KEY
+      default: sk-ant-mock
+    - key: DATABASE_URL
+      default: seeded-mock-schema
+  smokeTests:
+    - path: /
+      expected: 200-or-302
 ```
 
-> ⚠️ Use `basic-medium` (not `basic-ai-tools-small`) — run.sh installs `libpq-dev` via apt-get, which requires more resources.
+### Notes
 
-### Mock vs Real Env Vars
+- Use `basic-medium` because the app installs heavier dependencies.
+- Best fit when the core value is natural-language access to structured donor / CRM data.
+- This is a strong reuse pattern for analytics copilots with a single app surface.
 
-| Variable | Mock (default) | Real (go-live) | Where to get it |
-|---|---|---|---|
-| `ANTHROPIC_API_KEY` | App starts but NL→SQL calls return error | Real Claude key → full NL→SQL + response formatting | console.anthropic.com |
-| `DATABASE_URL` | Mock PostgreSQL schema seeded with donor data (`reagan_crm` schema on internal Supabase) | Real Salesforce sync → live donor data | Client's Salesforce → sync script |
+### Go-live inputs
 
-> **POC default**: App uses pre-seeded PostgreSQL donor data (300 mock donors, 5 campaigns, donation history). Vanna's built-in web UI handles chat. Natural language queries work end-to-end with mock data.
-
-### Kaji Skill
-
-- Skill name: `reagan-nlp-sql`
-- Trigger: `@kaji ask reagan: [question]`, `@kaji top 5 donors`
-- Config var: `REAGAN_API_URL=https://reagan-crm-chat.dev.hyperplane.dev`
-
-### What the Demo Shows
-
-1. Ask: "who are the top 10 donors by total amount?"
-2. App generates SQL, executes, returns: natural language answer + data table + SQL shown
-3. Follow-up: "which of those gave in 2025?" → contextual query
-4. Ask: "which campaigns raised the most last year?" → campaign analytics
-5. From Kaji: same queries in Mattermost, formatted as table
+- `ANTHROPIC_API_KEY`
+- `DATABASE_URL` or real Salesforce-synced warehouse path
 
 ---
 
-## Campbell & Company — Ops Co-Pilot
+## Campbell Ops Co-Pilot
 
-**ClickUp Spec:** `86afxwcn9` → https://app.clickup.com/t/86afxwcn9  
-**Client context:** Campbell & Company (trading infrastructure demo)  
-**Category:** Operational Assistant / Multi-Agent  
-**GitHub (source):** https://github.com/devsentient/demos/tree/main/campbell-ops-demo  
+**ClickUp Spec:** `86afxwcn9`
+**Client:** Campbell & Company
+**Category:** Operational Assistant / Multi-Agent
+**Source:** `devsentient/demos/campbell-ops-demo`
 
 ### Services
 
-| Service | Name | Script | Port | Live URL |
-|---|---|---|---|---|
-| FastAPI + Alpine.js UI | `campbell-ops-demo` | `campbell-ops-demo/run.sh` | `8787` | https://campbell-ops-demo.dev.hyperplane.dev |
-
-### Deployment Call
-
-```javascript
-shakudo-platform_createMicroservice({
-  name: "campbell-ops-demo",
-  userEmail: process.env.USER_EMAIL,
-  environment: "basic-ai-tools-small",
-  gitServer: "demos",
-  branch: "main",
-  port: 8787,
-  script: "campbell-ops-demo/run.sh",
-  parameters: [
-    { key: "ANTHROPIC_API_KEY", value: "sk-ant-mock" },
-    { key: "CLICKUP_API_KEY", value: "mock" },
-    { key: "MATTERMOST_WEBHOOK_URL", value: "" }
-  ]
-})
+```yaml
+- jobName: campbell-ops-demo
+  subdomain: campbell-ops-demo
+  jobType: basic-ai-tools-small
+  gitServerName: demos
+  branchName: main
+  workingDir: /tmp/git/monorepo/
+  pipelineYamlPath: campbell-ops-demo/run.sh
+  port: "8787"
+  deployOrder: 1
+  parameters:
+    - key: ANTHROPIC_API_KEY
+      default: sk-ant-mock
+    - key: CLICKUP_API_KEY
+      default: mock
+    - key: MATTERMOST_WEBHOOK_URL
+      default: ""
+    - key: SUPABASE_URL
+      default: sqlite-fallback
+    - key: SUPABASE_KEY
+      default: ""
+  smokeTests:
+    - path: /health
+      expected: 200
+    - path: /
+      expected: 200-or-302
 ```
 
-### Mock vs Real Env Vars
+### Notes
 
-| Variable | Mock (default) | Real (go-live) | Where to get it |
-|---|---|---|---|
-| `ANTHROPIC_API_KEY` | Diagnosis returns static mock responses | Real Claude key → live AI root cause analysis | console.anthropic.com |
-| `CLICKUP_API_KEY` | Ticket creation logs locally (no real task created) | Real key → ClickUp tasks created in Campbell list | ClickUp → Settings → API token |
-| `MATTERMOST_WEBHOOK_URL` | Alerts post to console | Real webhook → #campbell-ops-alerts channel | Mattermost → Integrations → Incoming webhooks |
-| `SUPABASE_URL` | SQLite fallback for incident storage | Real Supabase → `campbell_ops` schema | Supabase admin |
-| `SUPABASE_KEY` | — | Supabase anon/service key | Supabase admin |
+- Good reference for incident investigation and action-with-confirmation flows.
+- Multi-agent framing is acceptable here because the user story naturally separates monitoring, diagnosis, and action.
+- Mattermost alerts and ClickUp ticket creation can remain mocked for the POC.
 
-> **POC default**: 5 pre-defined failure scenarios inject on demand (Airflow, Bloomberg, TeamCity, risk-calculator, price-feed). Diagnosis and fix flow works end-to-end with static mock responses. Mattermost notifications require real webhook URL.
+### Go-live inputs
 
-### Kaji Skill
-
-- Skill name: `campbell-ops`
-- Trigger: `@kaji what failed in Airflow`, `@kaji inject a Bloomberg failure`, `@kaji diagnose the risk calculator`
-- Internal API: `http://hyperplane-service-[id].hyperplane-pipelines.svc.cluster.local:8787`
-
-### What the Demo Shows
-
-1. `@kaji inject a Bloomberg failure` → failure card appears in dashboard + Mattermost alert
-2. `@kaji diagnose the Bloomberg incident` → AI synthesizes logs + Confluence runbook → returns root cause + diff
-3. `@kaji apply the fix` → patch applied, build simulation runs, card moves to Resolved
-4. Dashboard: live ops feed, 5 service status cards, savings counter ($310K total)
-5. `@kaji create a ClickUp ticket for the price feed issue — assign to Jimmy`
+- `ANTHROPIC_API_KEY`
+- `CLICKUP_API_KEY`
+- `MATTERMOST_WEBHOOK_URL`
+- `SUPABASE_URL`
+- `SUPABASE_KEY`
 
 ---
 
-## Dynex Capital — MBS Intelligence Platform
+## Dynex MBS Intelligence Platform
 
-**ClickUp Spec:** `86ag1jmra` → https://app.clickup.com/t/86ag1jmra
-**Client context:** Dynex Capital — fixed income / MBS portfolio analytics
+**ClickUp Spec:** `86ag1jmra`
+**Client:** Dynex Capital
 **Category:** Data & Analytics / Operational Assistant
-**GitHub (source):** https://github.com/devsentient/demos/tree/main/dynex-mbs
+**Source:** `devsentient/demos/dynex-mbs`
 
 ### Services
 
-| Service | Name | Script | Port | Live URL |
-|---|---|---|---|---|
-| FastAPI backend | `dynex-mbs-api` | `dynex-mbs/api/run.sh` | `8787` | https://dynex-mbs-api.dev.hyperplane.dev |
-| React frontend | `dynex-mbs-ui` | `dynex-mbs/ui/run.sh` | `8787` | https://dynex-mbs-ui.dev.hyperplane.dev |
+```yaml
+- jobName: dynex-mbs-api
+  subdomain: dynex-mbs-api
+  jobType: basic-ai-tools-small
+  gitServerName: demos
+  branchName: main
+  workingDir: /tmp/git/monorepo/
+  pipelineYamlPath: dynex-mbs/api/run.sh
+  port: "8787"
+  deployOrder: 1
+  parameters:
+    - key: OPENAI_API_KEY
+      default: sk-mock
+    - key: OTEL_EXPORTER_OTLP_ENDPOINT
+      default: https://arize-phoenix.dev.hyperplane.dev
+    - key: N8N_WEBHOOK_URL
+      default: https://n8n-v2.dev.hyperplane.dev/webhook/briefing-approval
+  smokeTests:
+    - path: /health
+      expected: 200
+    - path: /portfolio
+      expected: 200
 
-### Deployment Calls
-
-```javascript
-// 1. Backend first
-shakudo-platform_createMicroservice({
-  name: "dynex-mbs-api",
-  userEmail: process.env.USER_EMAIL,
-  environment: "basic-ai-tools-small",
-  gitServer: "demos",
-  branch: "main",
-  port: 8787,
-  script: "dynex-mbs/api/run.sh",
-  parameters: [
-    { key: "OPENAI_API_KEY", value: "sk-mock" },
-    { key: "OTEL_EXPORTER_OTLP_ENDPOINT", value: "https://arize-phoenix.dev.hyperplane.dev" }
-  ]
-})
-
-// 2. Frontend
-shakudo-platform_createMicroservice({
-  name: "dynex-mbs-ui",
-  userEmail: process.env.USER_EMAIL,
-  environment: "basic-ai-tools-small",
-  gitServer: "demos",
-  branch: "main",
-  port: 8787,
-  script: "dynex-mbs/ui/run.sh",
-  parameters: []  // VITE_API_URL hardcoded to dynex-mbs-api.dev.hyperplane.dev
-})
+- jobName: dynex-mbs-ui
+  subdomain: dynex-mbs-ui
+  jobType: basic-ai-tools-small
+  gitServerName: demos
+  branchName: main
+  workingDir: /tmp/git/monorepo/
+  pipelineYamlPath: dynex-mbs/ui/run.sh
+  port: "8787"
+  deployOrder: 2
+  parameters: []
+  smokeTests:
+    - path: /
+      expected: 200-or-302
 ```
 
-### Mock vs Real Env Vars
+### Notes
 
-| Variable | Service | Mock (default) | Real (go-live) |
-|---|---|---|---|
-| `OPENAI_API_KEY` | dynex-mbs-api | Mock GPT-4o via LiteLLM — returns structured mock responses | Dynex Azure OpenAI key |
-| `OPENAI_BASE_URL` | dynex-mbs-api | Not set (uses LiteLLM mock) | `https://[dynex-azure].openai.azure.com/` |
-| `OPENAI_API_VERSION` | dynex-mbs-api | Not set | `2024-02-01` |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | dynex-mbs-api | Arize Phoenix on Shakudo dev | Client's Arize Phoenix instance |
-| `N8N_WEBHOOK_URL` | dynex-mbs-api | `https://n8n-v2.dev.hyperplane.dev/webhook/briefing-approval` | Same (or client's n8n) |
+- Deploy `dynex-mbs-api` before `dynex-mbs-ui`.
+- This is the strongest reference for finance / portfolio intelligence apps that combine analytics, briefing generation, and approval workflow.
+- The API can run with mocked LLM responses and Phoenix observability enabled in dev.
 
-> **POC default**: 20 MBS positions pre-seeded (`dynex_portfolio_q1_2026.csv`). Portfolio Intelligence, Briefing View, 10-Q Extraction, and Audit Trail all work with mock LLM responses. n8n approval flow requires valid n8n API key.
+### Go-live inputs
 
-### n8n Workflows
-
-- **Workflow:** Dynex MBS — Briefing Approval
-- **Trigger:** `POST /webhook/briefing-approval`
-- **Flow:** Webhook → Respond immediately → Wait 5s → POST approval back to API
-- **CFO name in workflow:** Mike Sartori (CFO)
-
-> ⚠️ Requires valid n8n API key at `/root/n8n-v2-api-key`. Key expires — validate before deploying.
-
-### Known Issues (fixed)
-
-- `*.csv` blocked by devsentient/demos `.gitignore` — force-add with `git add -f dynex-mbs/api/data/*.csv`
-- `ReferenceError: BarChart3 is not defined` — fixed in current build (import added to PortfolioIntelligence.jsx)
-
-### Kaji Skill
-
-- Skill name: `dynex-mbs`
-- Trigger: `@kaji show my MBS portfolio`, `@kaji analyze exposure to agency debt`, `@kaji generate briefing`
-- Config var: `DYNEX_API_URL=https://dynex-mbs-api.dev.hyperplane.dev`
-
-### What the Demo Shows
-
-1. Portfolio Intelligence — analyst asks "show my top 5 MBS exposures" → ranked positions with dollar impact, ~3s
-2. Briefing View — generate full daily briefing → "Submit for CFO Approval" triggers n8n approval flow
-3. 10-Q Extraction — upload FNMA/FHLMC/GNMA PDF → structured pool table + CSV export
-4. Audit Trail — Arize Phoenix iframe showing every LLM call logged
+- `OPENAI_API_KEY` or Azure OpenAI equivalents
+- `OPENAI_BASE_URL`
+- `OPENAI_API_VERSION`
+- `OTEL_EXPORTER_OTLP_ENDPOINT`
+- optional `N8N_WEBHOOK_URL`
 
 ---
 
-## Adding New POCs
+## Adding a new POC entry
 
-When a new POC is built from a spec, add an entry to this file:
-
-```markdown
-## [Client] — [Use Case Name]
-
-**ClickUp Spec:** [task ID] → [URL]
-**Client context:** [1 line]
-**Category:** [Operational Assistant / Analytics / Workflow Automation / Knowledge Assistant]
-**GitHub (source):** [repo URL]
-
-### Services
-
-| Service | Name | Script | Port | Live URL |
-|---|---|---|---|---|
-| [role] | [name] | [folder/run.sh] | [port] | https://[name].dev.hyperplane.dev |
-
-### Deployment Call
-[javascript block]
-
-### Mock vs Real Env Vars
-[table]
-
-### What the Demo Shows
-[numbered steps]
-```
+When a new POC is built, add:
+1. client + category metadata
+2. the exact deployment specs for each service
+3. deploy order
+4. mock / real credential notes
+5. smoke tests
+6. lite lifecycle notes if there is anything non-obvious about recreate behavior

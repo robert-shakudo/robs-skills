@@ -1,164 +1,322 @@
 # Shakudo Platform Capabilities
 
-Reference for mapping client use cases to Shakudo and Kaji platform components.
+Reference for selecting the best Shakudo component stack for a client POC.
+
+Use this file together with [Component Selection Rubric](./component-selection-rubric.md). The goal is not to list every tool the platform has — it is to choose the smallest, strongest combination that tells the story well.
 
 ---
 
-## Kaji — AI Agent Layer
+## Core Shakudo Components
 
-**What it is:** The AI agent that understands natural language, reasons over context, uses tools, and delivers responses. Kaji is the intelligence layer in every demo.
+### Kaji — AI agent layer
 
-**What it can do:**
-- Understand and respond to natural language questions
-- Make multi-step decisions (what to retrieve, what to do next)
-- Call connected tools and skills, use the results, and compose a final response
-- Maintain conversation context across a thread or session
-- Be deployed in Mattermost (chat-native), a web UI, or API endpoint
-- Run as an autonomous agent (given a goal, figures out the steps)
+**What it is:** Natural-language interface, reasoning layer, tool orchestration, and response composition.
 
-**Best for:** Any application where the user talks to the system in natural language
+**Best for:**
+- conversational assistants
+- investigation workflows
+- action-with-confirmation
+- executive briefing or summary generation
+- human-in-the-loop agent experiences
 
----
+**Choose Kaji when:**
+- the user naturally asks questions in language
+- the system needs to synthesize across tools or data sources
+- the interaction should feel like an assistant rather than a dashboard
 
-## Kaji MCP Skills (Tool Plugins)
-
-**What they are:** Individual skills that give Kaji the ability to interact with external systems. Each skill is a defined tool with inputs, outputs, and a clear purpose.
-
-**What they can do:**
-- Query databases (SQL, NoSQL, vector)
-- Call REST APIs (GET, POST, PATCH, DELETE)
-- Read and write files or documents
-- Trigger workflows (n8n, webhooks)
-- Search internal knowledge bases (RAG)
-- Perform computations or data transformations
-
-**Existing integrations (available now):**
-- **Dremio** — SQL queries over data lakes
-- **Fireflies** — Meeting transcripts and summaries
-- **Mattermost** — Read/write channel messages
-- **ClickUp** — Task management (read/write/create)
-- **Notion** — Page retrieval and updates
-- **Neo4j** — Graph database queries
-- **Supabase** — PostgreSQL queries
-- **GitHub** — Repo browsing, file reads
-- **HubSpot** — CRM records and contacts
-- **Graphiti Memory** — Persistent knowledge graph
-- **Gamma** — Presentation generation
-
-**Mockable skills (build in 1–2 days):**
-- Any REST API with JSON responses
-- Any SQL database (seed with mock data)
-- Any webhook-triggered action
-
-**Best for:** Any application that needs to retrieve or act on data from an external system
+**Avoid making Kaji the whole app when:**
+- the core workflow is mostly form entry, visual review, or bulk tabular manipulation
 
 ---
 
-## Kaji RAG (Retrieval-Augmented Generation)
+### Kaji MCP Skills
 
-**What it is:** Document ingestion, indexing, and semantic search. Kaji can retrieve relevant sections from uploaded documents and use them to answer questions.
+**What they are:** Tool connections that let Kaji read or act on external systems.
 
-**What it can do:**
-- Ingest PDFs, Word docs, Markdown files, web pages
-- Chunk and embed documents for semantic search
-- Return the most relevant passages for a given question
-- Summarize documents or answer specific questions from content
-- Combine retrieved content with LLM reasoning for accurate answers
+**Best for:**
+- CRM / ticketing / document / messaging integrations
+- database queries
+- external system actions
+- file reads and writes
 
-**Best for:** Knowledge assistants, policy Q&A, document summarization, support knowledge bases
+**Choose MCP skills when:**
+- the app needs direct system access from Kaji
+- the system already exists and we want to query or trigger it
+- the value comes from connecting two or more sources quickly
 
----
-
-## Shakudo Microservice
-
-**What it is:** A containerized application deployed on the Shakudo platform. Can be an API backend, a web frontend, or both.
-
-**What it can do:**
-- Host a FastAPI or Flask backend with custom business logic
-- Serve a React, Next.js, or plain HTML/JS frontend
-- Expose REST API endpoints for skills or external tools to call
-- Run background jobs, processing pipelines, or scheduled tasks
-- Store and serve data (SQLite, PostgreSQL, Redis)
-
-**Build time:** 1–3 days for a basic API + UI demo
-**Best for:** Custom UI demos, API backends, standalone applications
+**Common examples:** ClickUp, Notion, Mattermost, Dremio, Neo4j, HubSpot, Supabase, GitHub, Fireflies.
 
 ---
 
-## n8n on Shakudo
+### Shakudo Microservice
 
-**What it is:** Low-code workflow automation platform hosted on Shakudo. Connects systems, triggers actions, and orchestrates multi-step processes.
+**What it is:** Deployable backend or frontend service running custom code on Shakudo.
 
-**What it can do:**
-- Trigger workflows on events (webhook, schedule, message received)
-- Chain actions across multiple systems
-- Transform and route data between systems
-- Approval flows (wait for human input, then proceed)
-- Error handling and retry logic
-- Integrate with 400+ services via built-in connectors
+**Best for:**
+- custom APIs
+- business logic that should not live in prompt instructions
+- React / Next / static UI frontends
+- backend state and custom endpoints
+- scheduled or asynchronous jobs
 
-**Build time:** 1–2 days per workflow
-**Best for:** Approval workflows, event-triggered automations, system-to-system data pipelines
+**Choose a microservice when:**
+- the app needs a stable API or custom runtime
+- there is a non-trivial UI
+- business logic needs code, not just prompt orchestration
 
----
-
-## Dremio (Data Layer)
-
-**What it is:** SQL query engine that federates queries across data lakes, warehouses, and databases without moving data.
-
-**What it can do:**
-- Query Parquet, CSV, JSON files in S3 or GCS
-- Connect to PostgreSQL, MySQL, SQL Server
-- Join data across sources in a single query
-- Expose a SQL interface for Kaji skills
-- Handle large datasets with pushdown optimization
-
-**Best for:** Analytics, NLP-to-SQL, data exploration applications
+**Avoid overusing it when:**
+- a pure Kaji + MCP flow is enough for the POC story
 
 ---
 
-## Shakudo Notebook / JupyterHub
+### n8n on Shakudo
 
-**What it is:** Managed Jupyter environment on the Shakudo platform.
+**What it is:** Workflow and orchestration layer for approvals, callbacks, and multi-step automations.
 
-**What it can do:**
-- Run Python, R, or Scala notebooks
-- Train and evaluate ML models
-- Build and test data pipelines
-- Expose analysis results to other platform components
+**Best for:**
+- approval flows
+- event-triggered automations
+- notifications and webhooks
+- waiting on human input
+- stitching together multiple systems without writing all control logic in code
 
-**Best for:** ML demos, data science workflows, model evaluation
+**Choose n8n when:**
+- the workflow is step-based and externally observable
+- the value comes from orchestration, not deep computation
 
----
-
-## Platform Integrations (Active MCPs)
-
-These are live, working integrations available on the Shakudo platform right now:
-
-| Integration | What Kaji Can Do |
-|-------------|-----------------|
-| Salesforce | Read accounts, contacts, opportunities (via custom MCP) |
-| ServiceNow | Read/create incidents and requests |
-| Slack | Post messages, read channels (beta) |
-| Microsoft Teams | Post messages (beta) |
-| Jira | Read/write issues and sprints |
-| Confluence | Read pages and spaces |
-| SAP | Read order and inventory data (via custom connector) |
-| Snowflake | SQL queries via Dremio bridge |
-| AWS S3 | File reads and writes |
-| Azure Blob | File reads and writes |
-| Google Workspace | Docs, Sheets, Drive (read) |
-
-> Note: Mark as "available" only if confirmed active for the client's Shakudo instance. When in doubt, mark as 🟡 Mockable.
+**Do not choose n8n as the main place for:**
+- heavy business logic
+- complex domain reasoning that belongs in app code
 
 ---
 
-## What Kaji Demos Best
+### Dremio / SQL Layer
 
-Based on demos built to date, these patterns show the strongest client response:
+**What it is:** Federated SQL access over structured data.
 
-1. **Chat-native interface** — user asks a question in natural language, gets a complete answer with data. No dashboards, no forms.
-2. **Action-with-confirmation** — user says "approve this", Kaji shows what it will do, user confirms, action executes.
-3. **Multi-source synthesis** — Kaji pulls from 2–3 systems and delivers a single coherent answer ("here's what your CRM, ticketing, and monitoring all say about this account").
-4. **Workflow trigger from chat** — user types a request, Kaji triggers an n8n workflow, and reports back when complete.
-5. **Investigation assistant** — user describes a problem, Kaji investigates across systems and returns a root cause + recommendation.
+**Best for:**
+- NL-to-SQL
+- analytics copilots
+- reporting and BI-like queries
+- structured data exploration
+
+**Choose Dremio when:**
+- the primary value is over structured tables
+- the user wants queries, metrics, comparisons, trends, and drill-downs
+
+**Do not default to RAG when:**
+- the source of truth is really tables, not documents
+
+---
+
+### Kaji RAG
+
+**What it is:** Retrieval over documents, policies, manuals, and other unstructured content.
+
+**Best for:**
+- knowledge assistants
+- policy or SOP Q&A
+- document-grounded answers
+- meeting or research synthesis grounded in files
+
+**Choose RAG when:**
+- the most important evidence is in documents or narrative text
+- the app must cite or quote relevant content
+
+**Do not choose RAG as the main pattern when:**
+- the app is really operational analytics over structured data
+
+---
+
+### Graph Memory / Neo4j / Graphiti
+
+**What it is:** Graph-structured memory, relationships, and knowledge traversal.
+
+**Best for:**
+- relationship-heavy knowledge problems
+- entity linking across calls, threads, issues, and documents
+- persistent memory across sessions
+
+**Choose graph memory when:**
+- relationships matter as much as the content itself
+- the app needs memory beyond a single conversation
+
+**Do not add it just because it sounds agentic.** Use it when relationship structure clearly matters.
+
+---
+
+### Notebook / JupyterHub
+
+**What it is:** Analyst and data-science workspace.
+
+**Best for:**
+- model exploration
+- data analysis workbenches
+- evaluation workflows
+- internal analyst tools
+
+**Choose notebooks when:**
+- the user is an analyst or data scientist
+- interactivity and code-first exploration matter more than a polished app UI
+
+---
+
+### Observability — Langfuse / Arize Phoenix
+
+**What it is:** Tracing, prompt observability, and model behavior inspection.
+
+**Best for:**
+- agentic flows that need inspection
+- demos where showing traceability adds trust
+- debugging multi-step LLM calls
+
+**Choose observability when:**
+- LLM behavior is central to the value proposition
+- debugging or trust is important for the room
+
+---
+
+## Supporting Surfaces
+
+### Mattermost or chat surface
+
+Best when the user already works in chat and does not need a rich custom UI.
+
+### Web UI
+
+Best when the user must:
+- review lists, cards, or dashboards
+- compare records visually
+- fill forms
+- inspect state over time
+
+### Email / SMS / notifications
+
+Best as outputs or side effects, rarely as the primary interface.
+
+---
+
+## How to choose the primary user surface
+
+| Situation | Best default |
+|---|---|
+| User mainly asks questions or requests actions | Kaji chat |
+| User reviews dashboards, queues, or records | Web UI + API |
+| User approves or routes work across systems | Kaji + n8n or UI + n8n |
+| User explores metrics and asks analytical questions | Kaji + Dremio or analytics UI + Dremio |
+| User works from docs and policies | Kaji + RAG |
+
+**Best practice:** pick one primary surface, then add a secondary one only if it materially strengthens the POC.
+
+---
+
+## How to choose the data pattern
+
+| Data shape | Best default components |
+|---|---|
+| Structured relational data | Dremio / SQL + Kaji or UI |
+| Documents, PDFs, SOPs, policies | Kaji + RAG |
+| Operational events and approvals | Kaji / UI + microservice + n8n |
+| Mixed operational + structured data | Microservice + Dremio + Kaji |
+| Relationship-heavy knowledge | Kaji + graph memory / Neo4j |
+
+---
+
+## How to choose the action model
+
+| Action model | Best default |
+|---|---|
+| Read-only assistant | Kaji + MCP skills |
+| Human-in-the-loop action | Kaji or UI + microservice + optional n8n |
+| Background automation | n8n + microservice |
+| Investigation and synthesis | Kaji + MCP skills + optional observability |
+| Executive briefing | Kaji + data/doc layer + optional UI export |
+
+---
+
+## App pattern recommendations by app type
+
+### Operational Assistant
+
+**Recommended default stack:**
+- Kaji
+- MCP skills
+- microservice for business logic and state
+- optional UI if users must review queues or status
+- optional n8n for approval or callback flows
+
+**Strong examples:** Gallo, Campbell
+
+---
+
+### Data & Analytics Copilot
+
+**Recommended default stack:**
+- Kaji or lightweight analytics UI
+- Dremio / SQL layer
+- microservice only if custom logic or formatting is needed
+- optional observability if LLM query generation is central
+
+**Strong examples:** Reagan, Dynex
+
+---
+
+### Workflow Automation POC
+
+**Recommended default stack:**
+- Kaji or UI as initiation surface
+- n8n for orchestration
+- microservice for state, APIs, and callback handling
+- mocked external systems where possible
+
+**Strong examples:** HR Resume, Gallo approvals
+
+---
+
+### Knowledge Assistant
+
+**Recommended default stack:**
+- Kaji
+- RAG
+- optional microservice if custom retrieval or auth is needed
+- optional UI only if document browsing materially improves the story
+
+---
+
+### Multi-Agent System
+
+**Recommended default stack:**
+- Kaji
+- distinct tool / role boundaries
+- microservice for orchestration or shared state
+- observability strongly recommended
+
+**Use only when:**
+- there are truly separate roles (planner, analyst, executor, reviewer)
+- the workflow clearly benefits from separation
+
+**Do not use when:**
+- a single agent with tools can do the job just as well
+
+---
+
+## Best practices
+
+- Prefer **reuse** of an existing demo pattern over a fresh architecture.
+- Prefer **one primary surface**.
+- Prefer **explicit mock / real separation**.
+- Prefer **fewer moving parts** for the first build.
+- Prefer **stable app code** for business logic and **n8n** for orchestration.
+- Prefer **Dremio / SQL** for structured analytics and **RAG** for documents.
+- Add **observability** when LLM behavior is a core part of the story.
+
+---
+
+## Anti-patterns
+
+- choosing multi-agent because it sounds advanced
+- adding both a full UI and a deep chat assistant without a clear reason
+- using RAG for a use case that is really just SQL analytics
+- using n8n for all core logic
+- adding too many integrations to the POC when mocks prove the value just as well
+- listing components without a reason tied to user value

@@ -8,11 +8,23 @@
 
 Compare at least 2 options. For non-trivial use cases, compare 3.
 
-| Option | Interaction Model | Core Components | Why It Could Work | Why It Might Be Wrong | Verdict |
-|---|---|---|---|---|---|
-| Option A | [chat-first / UI-first / workflow-first / hybrid] | [Kaji, microservice, n8n, Dremio, RAG, etc.] | | | |
-| Option B | | | | | |
-| Option C *(optional)* | | | | | |
+| Option | Interaction Model | Core Components | Closest Reuse Pattern | Why It Could Work | Why It Might Be Wrong | Verdict |
+|---|---|---|---|---|---|---|
+| Option A | [chat-first / UI-first / workflow-first / hybrid] | [Kaji, microservice, n8n, Dremio, RAG, etc.] | [demo / none] | | | |
+| Option B | | | | | | |
+| Option C *(optional)* | | | | | | |
+
+---
+
+## Architecture Scorecard
+
+Use the scorecard to compare the candidate options.
+
+| Option | Credibility | Simplicity | Reuse | Mockability | Extensibility | Fit | Summary |
+|---|---|---|---|---|---|---|---|
+| Option A | H/M/L | H/M/L | H/M/L | H/M/L | H/M/L | H/M/L | |
+| Option B | H/M/L | H/M/L | H/M/L | H/M/L | H/M/L | H/M/L | |
+| Option C | H/M/L | H/M/L | H/M/L | H/M/L | H/M/L | H/M/L | |
 
 ---
 
@@ -50,6 +62,16 @@ Compare at least 2 options. For non-trivial use cases, compare 3.
 
 ---
 
+## POC Simplification Decisions
+
+| Decision | Keep / Remove / Mock / Defer | Why |
+|---|---|---|
+| [Custom UI] | [Keep / Remove / Mock / Defer] | |
+| [Workflow integration] | | |
+| [Advanced analytics / memory / agent roles] | | |
+
+---
+
 ## Component Selection Rationale
 
 | Need / Function | Recommended Component | Why This Component Fits | Build Now or Later |
@@ -57,8 +79,6 @@ Compare at least 2 options. For non-trivial use cases, compare 3.
 | Natural language interface | Kaji | [why] | Now |
 | [Need] | [Component] | [why] | [Now / Later] |
 | [Need] | [Component] | [why] | [Now / Later] |
-
-Add a short note on rejected choices:
 
 **Alternatives rejected:**
 - [Rejected component or pattern] — [why it was not chosen]
@@ -111,12 +131,15 @@ Provide one block per service. These should be explicit enough for `shakudo-micr
   pipelineYamlPath: [app-folder]/[service]/run.sh
   port: "8787"
   deployOrder: 1
+  lifecycleMode: lite-create-delete
   parameters:
     - key: [ENV_VAR]
       default: [mock-value-or-empty]
+      source: [real / mounted / mock]
   smokeTests:
     - path: /health
       expected: 200
+  recreateNotes: [Delete + recreate if only lite lifecycle is available]
 ```
 
 If using the app-directory pattern instead, make that explicit:
@@ -125,6 +148,15 @@ If using the app-directory pattern instead, make that explicit:
 workingDir: /tmp/git/monorepo/[app-folder]/
 pipelineYamlPath: run.sh
 ```
+
+---
+
+## Deployment & Lifecycle Notes
+
+- **Preferred deploy order:** API/backend → UI/frontend → workers/webhooks.
+- **Parameter resolution order:** user-provided real secret → mounted credential → mock default.
+- **Lite lifecycle note:** if only `shakudo-microservice-lite` is available, stop and restart actions may require delete + recreate.
+- **Smoke tests must pass before sharing URLs.**
 
 ---
 

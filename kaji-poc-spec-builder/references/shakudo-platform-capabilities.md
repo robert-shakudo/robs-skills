@@ -6,6 +6,19 @@ Use this file together with [Component Selection Rubric](./component-selection-r
 
 ---
 
+## POC-first selection sequence
+
+When designing a new app, make the decision in this order:
+1. **Choose the primary user surface** — chat, UI, workflow trigger, or analyst workspace.
+2. **Choose the core execution layer** — Kaji, microservice, workflow engine, analytics engine, or retrieval layer.
+3. **Choose the data access pattern** — SQL, documents, graph, APIs, or mixed.
+4. **Add orchestration only if needed** — approvals, callbacks, or event-driven steps.
+5. **Add observability or memory only when they strengthen the story.**
+
+If the architecture cannot be explained in five lines, it is probably too large for the POC.
+
+---
+
 ## Core Shakudo Components
 
 ### Kaji — AI agent layer
@@ -83,6 +96,7 @@ Use this file together with [Component Selection Rubric](./component-selection-r
 **Choose n8n when:**
 - the workflow is step-based and externally observable
 - the value comes from orchestration, not deep computation
+- approvals or callbacks are a visible part of the user story
 
 **Do not choose n8n as the main place for:**
 - heavy business logic
@@ -176,7 +190,7 @@ Use this file together with [Component Selection Rubric](./component-selection-r
 
 ---
 
-## Supporting Surfaces
+## Supporting surfaces
 
 ### Mattermost or chat surface
 
@@ -205,6 +219,7 @@ Best as outputs or side effects, rarely as the primary interface.
 | User approves or routes work across systems | Kaji + n8n or UI + n8n |
 | User explores metrics and asks analytical questions | Kaji + Dremio or analytics UI + Dremio |
 | User works from docs and policies | Kaji + RAG |
+| User needs a code-first exploration surface | Notebook + optional Kaji |
 
 **Best practice:** pick one primary surface, then add a secondary one only if it materially strengthens the POC.
 
@@ -234,7 +249,7 @@ Best as outputs or side effects, rarely as the primary interface.
 
 ---
 
-## App pattern recommendations by app type
+## Default build stacks by app type
 
 ### Operational Assistant
 
@@ -246,6 +261,8 @@ Best as outputs or side effects, rarely as the primary interface.
 - optional n8n for approval or callback flows
 
 **Strong examples:** Gallo, Campbell
+
+**Usually mock first:** downstream writebacks, approvals, or niche APIs.
 
 ---
 
@@ -259,6 +276,8 @@ Best as outputs or side effects, rarely as the primary interface.
 
 **Strong examples:** Reagan, Dynex
 
+**Usually mock first:** warehouse credentials or downstream exports.
+
 ---
 
 ### Workflow Automation POC
@@ -271,6 +290,8 @@ Best as outputs or side effects, rarely as the primary interface.
 
 **Strong examples:** HR Resume, Gallo approvals
 
+**Usually mock first:** final side effects in external systems.
+
 ---
 
 ### Knowledge Assistant
@@ -280,6 +301,8 @@ Best as outputs or side effects, rarely as the primary interface.
 - RAG
 - optional microservice if custom retrieval or auth is needed
 - optional UI only if document browsing materially improves the story
+
+**Usually mock first:** private corpora and auth edge cases.
 
 ---
 
@@ -300,6 +323,30 @@ Best as outputs or side effects, rarely as the primary interface.
 
 ---
 
+## Common combinations that work well
+
+| Pattern | Good combination | Why it works |
+|---|---|---|
+| Chat-first ops copilot | Kaji + MCP skills + microservice | Natural language + tool access + stable business logic |
+| Analytics assistant | Kaji + Dremio + optional microservice | Structured insight without overbuilding |
+| Approval workflow | Kaji or UI + microservice + n8n | Clear separation of reasoning, state, and orchestration |
+| Knowledge assistant | Kaji + RAG + optional UI | Strong grounding without forcing a data warehouse |
+| Agentic workflow with trust needs | Kaji + tools + observability | Easier debugging and better demo trust |
+
+---
+
+## What to mock first for a POC
+
+Prefer mocking in this order:
+1. downstream side effects (ticket creation, CRM updates, emails)
+2. hard-to-get credentials
+3. long-tail integrations that do not change the core story
+4. advanced approval routing rules
+
+Avoid mocking the core user experience or the primary reasoning path unless there is no other option.
+
+---
+
 ## Best practices
 
 - Prefer **reuse** of an existing demo pattern over a fresh architecture.
@@ -309,6 +356,7 @@ Best as outputs or side effects, rarely as the primary interface.
 - Prefer **stable app code** for business logic and **n8n** for orchestration.
 - Prefer **Dremio / SQL** for structured analytics and **RAG** for documents.
 - Add **observability** when LLM behavior is a core part of the story.
+- Add **graph memory** only when relationship structure is core to the problem.
 
 ---
 
@@ -320,3 +368,4 @@ Best as outputs or side effects, rarely as the primary interface.
 - using n8n for all core logic
 - adding too many integrations to the POC when mocks prove the value just as well
 - listing components without a reason tied to user value
+- adding memory or observability with no concrete role in the demo

@@ -169,10 +169,23 @@ Common options to evaluate:
 For each option, evaluate:
 - primary user surface
 - main Shakudo components
+- closest reuse pattern or demo
 - what the user gets in the room
 - what is easy to mock
 - what will be hardest to build
 - why it is or is not the best POC choice
+
+### Required comparison artifacts
+
+For every Full Spec, produce both:
+1. an **Architecture Options Considered** table
+2. an **Architecture Scorecard** using the rubric dimensions:
+   - credibility
+   - simplicity
+   - reuse
+   - mockability
+   - extensibility
+   - fit
 
 ### Default best-practice filters
 
@@ -189,13 +202,13 @@ For each option, evaluate:
 
 Produce a table like this:
 
-| Option | Interaction Model | Core Components | Why It Could Work | Why It Might Be Wrong | Verdict |
-|---|---|---|---|---|---|
-| Option A | | | | | |
-| Option B | | | | | |
-| Option C | | | | | |
+| Option | Interaction Model | Core Components | Closest Reuse Pattern | Why It Could Work | Why It Might Be Wrong | Verdict |
+|---|---|---|---|---|---|---|
+| Option A | | | | | | |
+| Option B | | | | | | |
+| Option C | | | | | | |
 
----
+Then add an Architecture Scorecard table with High / Medium / Low ratings.
 
 ### Phase 3: Recommended Build Strategy
 
@@ -216,9 +229,9 @@ Required fields:
 - Why this is the best POC choice:
 ```
 
-This section is mandatory. `kaji-poc-build-deploy` depends on it.
+Also include a short **POC Simplification Decisions** table that explicitly says what is being kept, removed, mocked, or deferred.
 
----
+This section is mandatory. `kaji-poc-build-deploy` depends on it.
 
 ### Phase 4: Build the App Spec (Sections 0–12)
 
@@ -294,9 +307,11 @@ Each service deployment spec should include:
 - `workingDir`
 - `pipelineYamlPath`
 - `port`
-- `parameters`
 - `deployOrder`
+- `lifecycleMode`
+- `parameters`
 - `smokeTests`
+- `recreateNotes`
 
 Prefer the Shakudo repo-root pattern unless there is a strong reason to use app-dir working directories:
 
@@ -305,7 +320,9 @@ workingDir: /tmp/git/monorepo/
 pipelineYamlPath: my-app/api/run.sh
 ```
 
----
+Parameter defaults should show whether they come from a real secret, a mounted env var, or a mock fallback.
+
+If the design depends on lite-only lifecycle behavior, say so explicitly in the build brief so the deploy skill knows stop / restart may require delete + recreate.
 
 ## Output Format
 

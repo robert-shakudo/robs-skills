@@ -339,14 +339,27 @@ Confirm:
 ### 4d — Confirm git server sync
 
 Compare:
-- local `HEAD`
+- target branch HEAD on GitHub
+- local `HEAD` if you edited code locally
 - git server `lastSyncedCommitHash`
 - git server `gitSyncStatus`
 
 Rules:
-- if `HEAD` != `lastSyncedCommitHash`, stop and reconcile git first
+- if you changed code locally, local `HEAD` must equal the branch commit you intend to deploy, and that commit must equal `lastSyncedCommitHash`
 - if `gitSyncStatus` looks unhealthy, stop and inspect before create
 - if `lastSyncedCommitHash` is null, do not deploy
+- if the local repo is behind and you need to edit anything, pull first
+
+### 4d.1 — Special case: library redeploy with no code edits
+
+If you are redeploying an unchanged library POC and **not** using local edits as the source of truth, the local checkout may lag behind the synced git server commit.
+
+That is acceptable only if:
+- the service definition comes from the registry or the already-pushed repo
+- you are not deploying uncommitted or unpublished local changes
+- the git server is in sync with the remote branch you intend to deploy
+
+When in doubt, pull latest and use the synced commit as the deployment source of truth.
 
 ### 4e — Choose the correct path pairing
 
@@ -366,7 +379,24 @@ PIPELINE_PATH="my-app/run.sh"
 
 Current demo-library services usually use **Pattern B**.
 
-### 4f — Create the service
+### 4f — Resolve deployment parameters before create
+
+Build the final parameter set in this order:
+1. user-provided real credential
+2. mounted credential already present in the environment
+3. explicit mock default from the spec or registry
+4. empty string only when the app intentionally supports it
+
+Before create, write down a short resolved parameter table:
+
+| Key | Source | Mode |
+|---|---|---|
+| `OPENAI_API_KEY` | mounted env | real |
+| `N8N_WEBHOOK_URL` | registry default | mock |
+
+Never omit an environment variable that `run.sh` or the app expects if the POC depends on it being present, even if the value is mocked.
+
+### 4g — Create the service
 
 Use the lite skill's `createShakudoService` mutation with:
 - `jobName`
@@ -380,38 +410,51 @@ Use the lite skill's `createShakudoService` mutation with:
 - `userEmail`
 - `parameters`
 
+Minimal mutation shape:
+
+```graphql
+mutation CreateShakudoService($input: CreateShakudoServiceInput!) {
+  createShakudoService(input: $input) {
+    id
+    jobName
+    status
+  }
+}
+```
+
 For multi-service apps:
 1. backend / API first
 2. frontend second
 3. worker / cron / webhook services after the API is stable
 
-### 4g — Poll the PipelineJob
+### 4h — Poll the PipelineJob
 
 A successful create response is **not** a successful deployment.
 
 After create, poll `pipelineJobs` by job ID and confirm:
 - status moves beyond the initial pending state
-- `workerPodName` becomes non-null
+- `workerPodName` becomes non-null when the backing service is actually materializing
 - `exposedPort` is correct
 
-### 4h — Inspect events and logs if stuck
+If the platform status strings are ambiguous, wait for a worker pod or a reachable service URL before claiming success.
+
+### 4i — Inspect events and logs if stuck
 
 If the job stays pending or status is unclear, use `getPodEvents` from the lite skill.
 
 Treat a long-lived `pending` job with `workerPodName: null` as a platform reconciliation blocker, not proof that the app code is broken.
 
-### 4i — Verify the in-cluster service URL
+### 4j — Verify the in-cluster service URL
 
 Derive the internal URL from the first segment of the job ID:
 
 ```bash
 JOB_PREFIX="${JOB_ID%%-*}"
 INTERNAL_URL="http://hyperplane-service-${JOB_PREFIX}.hyperplane-pipelines.svc.cluster.local:${PORT}"
+PUBLIC_URL="https://${SUBDOMAIN}.dev.hyperplane.dev"
 ```
 
-Only curl this after the PipelineJob has actually materialized into a running service.
-
----
+Only curl the internal URL after the PipelineJob has actually materialized into a running service.
 
 ## Phase 5: n8n Workflow Creation
 
@@ -477,9 +520,10 @@ Capture:
 - job type
 - working dir and pipeline path pairing
 - deploy order
-- required parameters
+- lifecycle mode (`lite-create-delete` or fuller lifecycle if available)
+- required parameters and their default/mock behavior
 - smoke tests
-- lite lifecycle notes
+- recreate notes for lite-only stop/start flows
 
 ---
 
@@ -504,7 +548,7 @@ Always explain whether the refresh will be destructive.
 | User intent | Preferred path | Lite-only fallback |
 |---|---|---|
 | Start a missing service | Create from registry config | Same |
-| Start an existing but stopped service | Use full `shakudo-microservice` if scale / restart is available | Delete + recreate after confirmation |
+| Start an existing but stopped service | Use full `shakudo-microservice` if scale / restart is available | Delete exact old service ID + recreate after confirmation |
 | Stop a running service | Scale to 0 with full skill if available | Lite cannot pause; delete only after explicit confirmation |
 | Restart a running service | Restart with full skill if available | Delete + recreate after explicit confirmation |
 | Delete permanently | Delete by exact ID | Same |
@@ -512,10 +556,19 @@ Always explain whether the refresh will be destructive.
 ### Search first
 
 Always resolve the exact service ID before any destructive action:
-
 - search by job name
 - if multiple matches exist, ask the user which one
 - never delete by guessed name alone
+
+### Lite-mode start decision tree
+
+If only lite is available:
+1. search for the exact service name
+2. if there is **no existing service**, create from the registry or build brief
+3. if there is an existing service that is already healthy, tell the user it is already running
+4. if there is an existing service in a stopped / failed / stale state, explain that lite mode requires delete + recreate
+5. get explicit confirmation before deleting the old ID
+6. recreate, poll, and smoke test again
 
 ### Lite-mode stop behavior
 
@@ -534,12 +587,10 @@ If the user says restart and only lite is available:
 ### Stop all POCs
 
 If the user asks to stop everything and only lite is available:
-- list every service that would be deleted
+- list every service that would be deleted in `jobName (id)` format
 - ask for explicit confirmation
 - delete each by exact ID
-- report the deleted IDs
-
----
+- report the deleted IDs and any recreate notes needed later
 
 ## Execution Checklist
 
@@ -557,11 +608,13 @@ If the user asks to stop everything and only lite is available:
 - [ ] Git server resolved from remote URL
 - [ ] `lastSyncedCommitHash` matches local HEAD
 - [ ] `workingDir` / `pipelineYamlPath` pairing chosen correctly
+- [ ] Final parameter set resolved and reviewed
 - [ ] Services created in the right order
 - [ ] PipelineJobs polled beyond initial pending state
 - [ ] Internal smoke tests passed
 - [ ] URLs returned with mock / real / deferred notes
 - [ ] Registry updated if the deployment shape changed
+- [ ] Destructive recreate confirmed if lite-only fallback was used
 
 ---
 
@@ -569,6 +622,7 @@ If the user asks to stop everything and only lite is available:
 
 - **Do not deploy from a dirty or unsynced repo.**
 - **Do not assume the git server name.** Resolve it.
+- **Do not treat a stale local library checkout as authoritative if the synced git server is newer.** Pull or explicitly rely on the synced remote commit.
 - **Do not assume `createShakudoService` means running.** Poll `pipelineJobs`.
 - **Do not derive container paths from your local checkout path.** Use `/tmp/git/monorepo`.
 - **Do not use lite delete as a hidden stop action.** Tell the user it is destructive.

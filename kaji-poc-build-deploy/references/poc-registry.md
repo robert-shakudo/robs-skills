@@ -29,14 +29,35 @@ Use this file with `kaji-poc-build-deploy` and `shakudo-microservice-lite` to re
 - **Restart in lite-only mode** → delete + recreate after explicit confirmation
 - **Scale-to-zero / preserve config** → only if the full `shakudo-microservice` skill is available
 
+### Parameter resolution order
+
+Resolve runtime parameters in this order:
+1. user-provided real secret
+2. mounted credential already available in the environment
+3. registry mock default
+4. intentionally blank value only if the app supports it
+
+### URL derivation
+
+- **Public URL**: `https://<subdomain>.dev.hyperplane.dev`
+- **Internal URL**: `http://hyperplane-service-<job-prefix>.hyperplane-pipelines.svc.cluster.local:<port>`
+
+### Lite recreate recipe
+
+When full lifecycle controls are unavailable:
+1. search for the exact service ID
+2. confirm destructive delete with the user
+3. delete the old service
+4. recreate from this registry definition
+5. poll `pipelineJobs`
+6. rerun smoke tests before reporting success
+
 ### Standard smoke tests
 
 For every service, verify at least one of:
 - `/health`
 - `/`
 - a key business endpoint from the POC
-
----
 
 ## Registry field reference
 
@@ -51,7 +72,10 @@ Each service definition should provide:
 - `port`
 - `parameters`
 - `deployOrder`
+- `lifecycleMode`
+- `parameters`
 - `smokeTests`
+- `recreateNotes`
 
 ---
 
@@ -74,7 +98,9 @@ Each service definition should provide:
   pipelineYamlPath: hr-resume-demo/run.sh
   port: "8787"
   deployOrder: 1
+  lifecycleMode: lite-create-delete
   parameters: []
+  recreateNotes: Delete + recreate if only lite lifecycle is available
   smokeTests:
     - path: /health
       expected: 200
@@ -114,6 +140,7 @@ Each service definition should provide:
   pipelineYamlPath: gallo-freight-exception-hub/api/run.sh
   port: "8787"
   deployOrder: 1
+  lifecycleMode: lite-create-delete
   parameters:
     - key: OPENAI_API_KEY
       default: sk-mock
@@ -121,6 +148,7 @@ Each service definition should provide:
       default: ""
     - key: GALLO_API_KEY
       default: ""
+  recreateNotes: Delete + recreate if only lite lifecycle is available
   smokeTests:
     - path: /health
       expected: 200
@@ -136,7 +164,9 @@ Each service definition should provide:
   pipelineYamlPath: gallo-freight-exception-hub/ui/run.sh
   port: "8787"
   deployOrder: 2
+  lifecycleMode: lite-create-delete
   parameters: []
+  recreateNotes: Delete + recreate if only lite lifecycle is available
   smokeTests:
     - path: /
       expected: 200-or-302
@@ -175,11 +205,13 @@ Each service definition should provide:
   pipelineYamlPath: reagan-nlp-sql-demo/run.sh
   port: "8787"
   deployOrder: 1
+  lifecycleMode: lite-create-delete
   parameters:
     - key: ANTHROPIC_API_KEY
       default: sk-ant-mock
     - key: DATABASE_URL
       default: seeded-mock-schema
+  recreateNotes: Delete + recreate if only lite lifecycle is available
   smokeTests:
     - path: /
       expected: 200-or-302
@@ -217,6 +249,7 @@ Each service definition should provide:
   pipelineYamlPath: campbell-ops-demo/run.sh
   port: "8787"
   deployOrder: 1
+  lifecycleMode: lite-create-delete
   parameters:
     - key: ANTHROPIC_API_KEY
       default: sk-ant-mock
@@ -228,6 +261,7 @@ Each service definition should provide:
       default: sqlite-fallback
     - key: SUPABASE_KEY
       default: ""
+  recreateNotes: Delete + recreate if only lite lifecycle is available
   smokeTests:
     - path: /health
       expected: 200
@@ -270,6 +304,7 @@ Each service definition should provide:
   pipelineYamlPath: dynex-mbs/api/run.sh
   port: "8787"
   deployOrder: 1
+  lifecycleMode: lite-create-delete
   parameters:
     - key: OPENAI_API_KEY
       default: sk-mock
@@ -277,6 +312,7 @@ Each service definition should provide:
       default: https://arize-phoenix.dev.hyperplane.dev
     - key: N8N_WEBHOOK_URL
       default: https://n8n-v2.dev.hyperplane.dev/webhook/briefing-approval
+  recreateNotes: Delete + recreate if only lite lifecycle is available
   smokeTests:
     - path: /health
       expected: 200
@@ -292,7 +328,9 @@ Each service definition should provide:
   pipelineYamlPath: dynex-mbs/ui/run.sh
   port: "8787"
   deployOrder: 2
+  lifecycleMode: lite-create-delete
   parameters: []
+  recreateNotes: Delete + recreate if only lite lifecycle is available
   smokeTests:
     - path: /
       expected: 200-or-302

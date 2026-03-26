@@ -21,13 +21,16 @@ Use this file with `kaji-poc-build-deploy` and `shakudo-microservice-lite` to re
   2. UI / frontend
   3. workers or webhooks
 
-### Lite lifecycle rules
+### Lifecycle action map
 
 - **Create / inspect / delete** → `shakudo-microservice-lite`
-- **Start after delete** → recreate from this registry
-- **Stop in lite-only mode** → delete after explicit confirmation
-- **Restart in lite-only mode** → delete + recreate after explicit confirmation
-- **Scale-to-zero / preserve config** → only if the full `shakudo-microservice` skill is available
+- **Search / identify services** → `searchMicroservice`
+- **Stop without deleting** → `scaleService(id, newReplicas: 0)`
+- **Start after non-destructive stop** → `scaleService(id, newReplicas: 1)`
+- **Restart in place** → `restartService(id)`
+- **Tune replica bounds** → `updateServiceReplicas(...)`
+- **Cancel a stuck rollout** → `cancelService(id)`
+- **Delete permanently** → delete by exact ID after confirmation
 
 ### Parameter resolution order
 
@@ -42,15 +45,17 @@ Resolve runtime parameters in this order:
 - **Public URL**: `https://<subdomain>.dev.hyperplane.dev`
 - **Internal URL**: `http://hyperplane-service-<job-prefix>.hyperplane-pipelines.svc.cluster.local:<port>`
 
-### Lite recreate recipe
+### Lifecycle execution rules
 
-When full lifecycle controls are unavailable:
+When the service already exists:
 1. search for the exact service ID
-2. confirm destructive delete with the user
-3. delete the old service
-4. recreate from this registry definition
-5. poll `pipelineJobs`
-6. rerun smoke tests before reporting success
+2. match the action to the user intent
+   - stop → `scaleService(..., 0)`
+   - start → `scaleService(..., 1)`
+   - restart → `restartService(id)`
+   - broken rollout → `cancelService(id)`
+3. only use delete + recreate when the service is unrecoverable or the user explicitly wants deletion
+4. rerun smoke tests before reporting success
 
 ### Standard smoke tests
 
@@ -73,7 +78,9 @@ Each service definition should provide:
 - `parameters`
 - `deployOrder`
 - `lifecycleMode`
-- `parameters`
+- `preferredStartAction`
+- `preferredStopAction`
+- `preferredRestartAction`
 - `smokeTests`
 - `recreateNotes`
 
@@ -98,9 +105,12 @@ Each service definition should provide:
   pipelineYamlPath: hr-resume-demo/run.sh
   port: "8787"
   deployOrder: 1
-  lifecycleMode: lite-create-delete
+  lifecycleMode: graph-managed
+  preferredStartAction: scale-to-1-if-present-else-create
+  preferredStopAction: scale-to-0
+  preferredRestartAction: restartService
   parameters: []
-  recreateNotes: Delete + recreate if only lite lifecycle is available
+  recreateNotes: Delete + recreate only if scale / restart actions are unavailable
   smokeTests:
     - path: /health
       expected: 200
@@ -113,11 +123,11 @@ Each service definition should provide:
 - Works end to end in mock mode with hardcoded applicants.
 - Real go-live inputs may include `PAYCOM_API_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `OPENAI_API_KEY`.
 
-### Lite lifecycle notes
+### Lifecycle notes
 
-- Start: create `hr-resume-demo`
-- Stop in lite-only mode: delete after confirmation
-- Restart in lite-only mode: delete + recreate
+- Start: create if missing, otherwise scale to 1
+- Stop: scale to 0
+- Restart: prefer `restartService`; fall back to delete + recreate only if restart is unavailable
 
 ---
 
@@ -140,7 +150,10 @@ Each service definition should provide:
   pipelineYamlPath: gallo-freight-exception-hub/api/run.sh
   port: "8787"
   deployOrder: 1
-  lifecycleMode: lite-create-delete
+  lifecycleMode: graph-managed
+  preferredStartAction: scale-to-1-if-present-else-create
+  preferredStopAction: scale-to-0
+  preferredRestartAction: restartService
   parameters:
     - key: OPENAI_API_KEY
       default: sk-mock
@@ -148,7 +161,7 @@ Each service definition should provide:
       default: ""
     - key: GALLO_API_KEY
       default: ""
-  recreateNotes: Delete + recreate if only lite lifecycle is available
+  recreateNotes: Delete + recreate only if scale / restart actions are unavailable
   smokeTests:
     - path: /health
       expected: 200
@@ -164,9 +177,12 @@ Each service definition should provide:
   pipelineYamlPath: gallo-freight-exception-hub/ui/run.sh
   port: "8787"
   deployOrder: 2
-  lifecycleMode: lite-create-delete
+  lifecycleMode: graph-managed
+  preferredStartAction: scale-to-1-if-present-else-create
+  preferredStopAction: scale-to-0
+  preferredRestartAction: restartService
   parameters: []
-  recreateNotes: Delete + recreate if only lite lifecycle is available
+  recreateNotes: Delete + recreate only if scale / restart actions are unavailable
   smokeTests:
     - path: /
       expected: 200-or-302
@@ -205,13 +221,16 @@ Each service definition should provide:
   pipelineYamlPath: reagan-nlp-sql-demo/run.sh
   port: "8787"
   deployOrder: 1
-  lifecycleMode: lite-create-delete
+  lifecycleMode: graph-managed
+  preferredStartAction: scale-to-1-if-present-else-create
+  preferredStopAction: scale-to-0
+  preferredRestartAction: restartService
   parameters:
     - key: ANTHROPIC_API_KEY
       default: sk-ant-mock
     - key: DATABASE_URL
       default: seeded-mock-schema
-  recreateNotes: Delete + recreate if only lite lifecycle is available
+  recreateNotes: Delete + recreate only if scale / restart actions are unavailable
   smokeTests:
     - path: /
       expected: 200-or-302
@@ -249,7 +268,10 @@ Each service definition should provide:
   pipelineYamlPath: campbell-ops-demo/run.sh
   port: "8787"
   deployOrder: 1
-  lifecycleMode: lite-create-delete
+  lifecycleMode: graph-managed
+  preferredStartAction: scale-to-1-if-present-else-create
+  preferredStopAction: scale-to-0
+  preferredRestartAction: restartService
   parameters:
     - key: ANTHROPIC_API_KEY
       default: sk-ant-mock
@@ -261,7 +283,7 @@ Each service definition should provide:
       default: sqlite-fallback
     - key: SUPABASE_KEY
       default: ""
-  recreateNotes: Delete + recreate if only lite lifecycle is available
+  recreateNotes: Delete + recreate only if scale / restart actions are unavailable
   smokeTests:
     - path: /health
       expected: 200
@@ -304,7 +326,10 @@ Each service definition should provide:
   pipelineYamlPath: dynex-mbs/api/run.sh
   port: "8787"
   deployOrder: 1
-  lifecycleMode: lite-create-delete
+  lifecycleMode: graph-managed
+  preferredStartAction: scale-to-1-if-present-else-create
+  preferredStopAction: scale-to-0
+  preferredRestartAction: restartService
   parameters:
     - key: OPENAI_API_KEY
       default: sk-mock
@@ -312,7 +337,7 @@ Each service definition should provide:
       default: https://arize-phoenix.dev.hyperplane.dev
     - key: N8N_WEBHOOK_URL
       default: https://n8n-v2.dev.hyperplane.dev/webhook/briefing-approval
-  recreateNotes: Delete + recreate if only lite lifecycle is available
+  recreateNotes: Delete + recreate only if scale / restart actions are unavailable
   smokeTests:
     - path: /health
       expected: 200
@@ -328,9 +353,12 @@ Each service definition should provide:
   pipelineYamlPath: dynex-mbs/ui/run.sh
   port: "8787"
   deployOrder: 2
-  lifecycleMode: lite-create-delete
+  lifecycleMode: graph-managed
+  preferredStartAction: scale-to-1-if-present-else-create
+  preferredStopAction: scale-to-0
+  preferredRestartAction: restartService
   parameters: []
-  recreateNotes: Delete + recreate if only lite lifecycle is available
+  recreateNotes: Delete + recreate only if scale / restart actions are unavailable
   smokeTests:
     - path: /
       expected: 200-or-302

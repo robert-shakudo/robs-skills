@@ -29,7 +29,7 @@ This skill turns a completed POC spec into a running application on Shakudo. It 
 - **Reuse before creating.** Prefer forking patterns from the demo library before inventing a fresh stack.
 - **Ask for missing credentials before coding.** Never discover blockers mid-build.
 - **Deploy only from synced git.** Local code, remote branch, and Shakudo git server must agree.
-- **Use `shakudo-microservice-lite` by default.** It is the standard workflow for create / inspect / delete. Use the full `shakudo-microservice` skill only when scale or restart behavior is actually available and needed.
+- **Use `shakudo-microservice-lite` by default for create / inspect / delete.** Layer in the broader GraphQL lifecycle actions — `scaleService`, `restartService`, `updateServiceReplicas`, and `cancelService` — when the platform exposes them.
 
 ---
 
@@ -440,9 +440,25 @@ If the platform status strings are ambiguous, wait for a worker pod or a reachab
 
 ### 4i — Inspect events and logs if stuck
 
-If the job stays pending or status is unclear, use `getPodEvents` from the lite skill.
+If the job stays pending or status is unclear, use `getPodEvents` from the lite skill or direct GraphQL.
 
 Treat a long-lived `pending` job with `workerPodName: null` as a platform reconciliation blocker, not proof that the app code is broken.
+
+### 4i.1 — Full action map available after create
+
+Once the service exists, the platform may expose these non-create lifecycle actions:
+
+| Action | GraphQL operation | Typical use |
+|---|---|---|
+| Search by name | `searchMicroservice` | resolve exact service ID |
+| Tail logs / events | `getPodEvents(jobId)` | debug startup and failures |
+| Stop without deleting | `scaleService(id, newReplicas: 0)` | turn off the app non-destructively |
+| Start again | `scaleService(id, newReplicas: 1)` | bring a scaled-down app back up |
+| Restart | `restartService(id)` | reload code or config without deleting |
+| Tune min / max replicas | `updateServiceReplicas(...)` | adjust HPA-style bounds |
+| Cancel broken rollout | `cancelService(id)` | stop a stuck or invalid service operation |
+
+Prefer these operations over delete + recreate when they are available and match the user's intent.
 
 ### 4j — Verify the in-cluster service URL
 
@@ -520,10 +536,10 @@ Capture:
 - job type
 - working dir and pipeline path pairing
 - deploy order
-- lifecycle mode (`lite-create-delete` or fuller lifecycle if available)
+- lifecycle mode (`graph-managed` when scale / restart actions are available, otherwise `lite-create-delete`)
 - required parameters and their default/mock behavior
 - smoke tests
-- recreate notes for lite-only stop/start flows
+- recreate notes for delete + recreate fallback behavior
 
 ---
 
@@ -532,8 +548,11 @@ Capture:
 When the user provides real credentials later:
 
 1. update the deployment parameters
-2. if using lite-only lifecycle, delete and recreate the affected service
-3. if the full microservice skill is available, use it for restart / scale workflows after config changes
+2. if the service already exists, prefer the least-destructive lifecycle action that matches the change:
+   - restart → `restartService(id)` after config or code updates
+   - start / stop → `scaleService(...)` when the app should be turned on or off
+   - stuck rollout → `cancelService(id)` before retrying
+3. use delete + recreate only when non-destructive lifecycle actions are unavailable or the service is unrecoverable
 
 Always explain whether the refresh will be destructive.
 
@@ -541,56 +560,70 @@ Always explain whether the refresh will be destructive.
 
 ## Start / Stop / Restart / Delete
 
-`shakudo-microservice-lite` is **minimal lifecycle only**. It supports create, inspect, and delete. It does **not** provide scale-to-zero or non-destructive restart operations.
+There are **three levels** of lifecycle capability you may encounter:
+
+1. **Documented lite workflow** — create / inspect / delete
+2. **Full Shakudo microservice skill** — create / restart / scale / debug / delete
+3. **Underlying GraphQL lifecycle API** — includes `scaleService`, `restartService`, `updateServiceReplicas`, `cancelService`, `searchMicroservice`, and `getPodEvents`
 
 ### Lifecycle policy
 
-| User intent | Preferred path | Lite-only fallback |
+| User intent | Preferred path | Fallback |
 |---|---|---|
 | Start a missing service | Create from registry config | Same |
-| Start an existing but stopped service | Use full `shakudo-microservice` if scale / restart is available | Delete exact old service ID + recreate after confirmation |
-| Stop a running service | Scale to 0 with full skill if available | Lite cannot pause; delete only after explicit confirmation |
-| Restart a running service | Restart with full skill if available | Delete + recreate after explicit confirmation |
-| Delete permanently | Delete by exact ID | Same |
+| Start a scaled-down service | `scaleService(id, newReplicas: 1)` | recreate only if scale is unavailable |
+| Stop a running service | `scaleService(id, newReplicas: 0)` | if scaling is unavailable, explain that delete is the only remaining option |
+| Restart a running service | `restartService(id)` | delete + recreate only after confirmation |
+| Adjust scaling bounds | `updateServiceReplicas(...)` | leave as-is if tuning is unnecessary |
+| Cancel a stuck rollout | `cancelService(id)` | inspect events and decide whether recreate is needed |
+| Delete permanently | delete by exact ID | Same |
 
 ### Search first
 
-Always resolve the exact service ID before any destructive action:
-- search by job name
+Always resolve the exact service ID before any lifecycle action:
+- search by job name with `searchMicroservice`
 - if multiple matches exist, ask the user which one
-- never delete by guessed name alone
+- never restart, scale, or delete by guessed name alone
 
-### Lite-mode start decision tree
+### Non-destructive stop behavior
 
-If only lite is available:
-1. search for the exact service name
-2. if there is **no existing service**, create from the registry or build brief
-3. if there is an existing service that is already healthy, tell the user it is already running
-4. if there is an existing service in a stopped / failed / stale state, explain that lite mode requires delete + recreate
-5. get explicit confirmation before deleting the old ID
-6. recreate, poll, and smoke test again
+If the user says **stop**, interpret that as **turn off without deleting** unless they explicitly say delete.
 
-### Lite-mode stop behavior
+Preferred action:
+```graphql
+mutation Scale($id: String!, $newReplicas: Int!) {
+  scaleService(id: $id, newReplicas: $newReplicas)
+}
+```
+with `newReplicas: 0`.
 
-If only lite is available, say this clearly:
+### Non-destructive start behavior
 
-> "I can recreate or delete this service with `shakudo-microservice-lite`, but I cannot scale it to zero non-destructively. Do you want me to delete it?"
+If the service already exists but is off, prefer:
+- `scaleService(id, newReplicas: 1)`
 
-### Lite-mode restart behavior
+If the service does not exist, create it from the registry or build brief.
 
-If the user says restart and only lite is available:
-1. confirm delete + recreate is acceptable
-2. delete by exact ID
-3. recreate from the registry / build brief config
-4. poll and smoke test again
+### Restart behavior
 
-### Stop all POCs
+If the user says restart:
+1. resolve the exact service ID
+2. prefer `restartService(id)`
+3. check `getPodEvents` if the restart looks unhealthy
+4. only fall back to delete + recreate when restart is unavailable or the service is unrecoverable
 
-If the user asks to stop everything and only lite is available:
-- list every service that would be deleted in `jobName (id)` format
-- ask for explicit confirmation
-- delete each by exact ID
-- report the deleted IDs and any recreate notes needed later
+### Replica tuning behavior
+
+Use `updateServiceReplicas` only when the user asks for capacity or autoscaling changes, not for ordinary stop/start.
+
+### Cancel behavior
+
+Use `cancelService(id)` when a rollout is clearly stuck or invalid and should be interrupted before retrying.
+
+### Deletion behavior
+
+Deletion is permanent and should be treated separately from stop / restart.
+Always ask for confirmation before deleting a service.
 
 ## Execution Checklist
 
@@ -612,9 +645,10 @@ If the user asks to stop everything and only lite is available:
 - [ ] Services created in the right order
 - [ ] PipelineJobs polled beyond initial pending state
 - [ ] Internal smoke tests passed
+- [ ] Correct lifecycle action chosen for the user intent (create / scale / restart / cancel / delete)
 - [ ] URLs returned with mock / real / deferred notes
 - [ ] Registry updated if the deployment shape changed
-- [ ] Destructive recreate confirmed if lite-only fallback was used
+- [ ] Destructive recreate confirmed if delete + recreate fallback was used
 
 ---
 
@@ -625,7 +659,7 @@ If the user asks to stop everything and only lite is available:
 - **Do not treat a stale local library checkout as authoritative if the synced git server is newer.** Pull or explicitly rely on the synced remote commit.
 - **Do not assume `createShakudoService` means running.** Poll `pipelineJobs`.
 - **Do not derive container paths from your local checkout path.** Use `/tmp/git/monorepo`.
-- **Do not use lite delete as a hidden stop action.** Tell the user it is destructive.
+- **Do not use delete as a hidden stop action when `scaleService` is available.** Stop should mean scale-to-zero unless the user explicitly asks for deletion.
 - **Do not keep every component from the spec if they are unnecessary for the POC.** Simplify first.
 - **Do not report URLs before smoke tests pass.**
 - **Do not build n8n workflows with an expired key.** Mock or export instead.

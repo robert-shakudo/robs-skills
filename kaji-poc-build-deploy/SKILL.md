@@ -1,11 +1,11 @@
 ---
 name: kaji-poc-build-deploy
-description: "One-command POC build and deploy. Reads a ClickUp spec (from kaji-poc-spec-builder), builds and deploys all components to Shakudo using the demos git server, uses mocks for all unconfigured credentials, returns live URLs. Companion to kaji-poc-spec-builder. Use when asked to build, deploy, launch, go live, or spin up a POC."
+description: "One-command POC build and deploy. Reads a ClickUp spec (from kaji-poc-spec-builder), runs an architecture sanity check, builds the minimum credible app, and deploys to Shakudo using shakudo-microservice-lite GraphQL workflows. Uses mocks for unconfigured systems and returns live URLs."
 license: MIT
 compatibility: opencode
 metadata:
   author: robert-shakudo
-  version: "1.1"
+  version: "1.2"
   category: solutions-engineering
   tags:
     - poc
@@ -14,16 +14,22 @@ metadata:
     - shakudo
     - microservice
     - demos
-    - build
+    - architecture
 ---
 
 # Kaji POC Build & Deploy
 
 **Phase 2 of the POC workflow** — companion to `kaji-poc-spec-builder`.
 
-Takes a ClickUp task ID or POC name. Validates the spec. Checks ALL credentials upfront. Builds code, commits to git, deploys to `dev.hyperplane.dev`. Returns live URLs.
+This skill turns a completed POC spec into a running application on Shakudo. It validates the spec, checks credentials, simplifies the architecture when the spec is overbuilt for a POC, builds only the minimum credible components, deploys with `shakudo-microservice-lite`, and returns live URLs.
 
-**Core principle**: Ask for everything you need before you write a single line of code. Never discover a missing credential mid-flight.
+## Core principles
+
+- **Simplest credible POC wins.** Do not overbuild just because the final production vision is large.
+- **Reuse before creating.** Prefer forking patterns from the demo library before inventing a fresh stack.
+- **Ask for missing credentials before coding.** Never discover blockers mid-build.
+- **Deploy only from synced git.** Local code, remote branch, and Shakudo git server must agree.
+- **Use `shakudo-microservice-lite` by default.** It is the standard workflow for create / inspect / delete. Use the full `shakudo-microservice` skill only when scale or restart behavior is actually available and needed.
 
 ---
 
@@ -33,7 +39,9 @@ Takes a ClickUp task ID or POC name. Validates the spec. Checks ALL credentials 
 - "go live with [ClickUp task URL]"
 - "build and deploy this spec"
 - "spin up the demo for [client]"
-- "redeploy / restart [service name]"
+- "deploy / redeploy [service name]"
+- "start [POC name]" or "recreate [POC name]"
+- "stop / teardown / delete [POC name]"
 - "take the [name] POC live — here are the credentials"
 - "build and deploy all demos"
 
@@ -41,154 +49,210 @@ Takes a ClickUp task ID or POC name. Validates the spec. Checks ALL credentials 
 
 ## Two Paths
 
-### Path A — Library POC (Gallo, HR Resume, Reagan, Campbell, Dynex)
+### Path A — Library POC
 
-Pre-built — code already exists. Skip Phase 2 (Build), go straight to Phase 3 (Deploy).
+For existing POCs like Gallo, HR Resume, Reagan, Campbell, and Dynex:
+- skip new architecture design
+- run a quick architecture sanity check
+- go straight to deploy / recreate using the registry
 
-→ See [POC Registry](./references/poc-registry.md) for exact configs.
+Use [POC Registry](./references/poc-registry.md) for exact service definitions.
 
-### Path B — New POC from ClickUp Spec
+### Path B — New POC from Spec
 
-Code doesn't exist yet. Run all phases in order: validate → credential check → build → deploy → test.
+For a new ClickUp spec:
+- validate the spec outputs
+- confirm the recommended build strategy still makes sense
+- build the missing components
+- commit and push to `devsentient/demos`
+- deploy each service
+
+---
+
+## Required Inputs from `kaji-poc-spec-builder`
+
+Do not build unless the spec includes all of the following:
+
+| Required output | Why it matters |
+|---|---|
+| Sections 0–12 of the app spec | Core product, users, systems, scope, UX |
+| Architecture Options Considered | Shows what approaches were evaluated |
+| Recommended Build Strategy | Tells you what to build now vs later |
+| Component Selection Rationale | Explains why each Shakudo component was chosen |
+| Mock / Real System Map | Determines which credentials are required |
+| POC Build Brief | Defines service list, env vars, deploy order, smoke tests |
+| Service Deployment Specs | Provides `jobName`, `workingDir`, `pipelineYamlPath`, `port`, `jobType` |
+
+If anything is missing, stop and say:
+
+> "The spec is missing [X]. Update the spec first with `kaji-poc-spec-builder`, or tell me [X] now so I can complete the build brief before deploying."
 
 ---
 
 ## Phase 0: Spec Validation
 
-**STOP if the spec is missing required sections. Never build from an incomplete spec.**
+Read the ClickUp task and confirm all required sections are present.
 
-Read the ClickUp task. Confirm ALL of the following exist:
-
-| Required | Where in spec | What to check |
+| Check | Where to look | What to confirm |
 |---|---|---|
-| Service list | POC Build Brief | At least 1 service defined (backend / frontend / worker) |
-| Entry scripts | POC Build Brief | `run.sh` path named for each service |
-| Environment vars | POC Build Brief — "POC (dev)" block | Which LLM, which external systems |
-| Port numbers | POC Build Brief or Section 2 | Explicit or assumed 8787 |
-| External systems | Section 6 (Systems Connected) | Which are mocked vs real |
-| Mock/Real map | Mock/Real System Map table | Each system has a mock strategy |
+| Service list | POC Build Brief | Every backend, UI, worker, or webhook service is named |
+| Entry scripts | Service Deployment Specs | `run.sh` or equivalent path is explicit |
+| Env vars | POC Build Brief | Mock vs real credentials are named |
+| Port numbers | Build Brief / deployment specs | Explicit or intentionally standardized to `8787` |
+| Architecture outputs | Architecture Analysis block | Recommended stack and rejected alternatives are written |
+| External systems | Section 6 + mock/real map | Each system is classified as available, mocked, or needs build |
+| Smoke tests | Build Brief | At least one health or business-path check per service |
 
-If ANY section is missing → stop and tell the user:
-> "The spec is missing [X]. Update the spec first with `kaji-poc-spec-builder`, or tell me [X] now."
-
-Do not build. Do not deploy. Wait.
+If the build brief is incomplete, do not improvise a deployment plan from scattered notes.
 
 ---
 
-## Phase 1: Credential Pre-flight
+## Phase 1: Architecture Sanity Check
 
-**Run before writing any code. Ask for every key upfront. Never discover a missing credential mid-flight.**
+Before touching code, verify that the spec is still the right shape for a POC.
 
-### 1a — Scan spec for external systems
+### Questions to answer
 
-Read Section 6 (Systems Connected) and Mock/Real System Map. For every system NOT marked 🟡 Mocked, and every platform component mentioned (n8n, LLM, etc.) — check if the required credential exists.
+1. Is this **chat-first**, **UI-first**, **workflow-first**, **analytics-first**, or **hybrid**?
+2. Which components are required to tell the story in the meeting?
+3. Which components can be deferred to Year 2 without hurting the POC?
+4. Is there an existing demo whose patterns should be reused?
+5. Is the current architecture overbuilt for the available timeline?
 
-### 1b — Check all credentials
+### Default simplification rules
 
-```bash
-# GitHub token (required for all builds)
-git remote get-url origin   # check if token is embedded
+- Prefer **one primary user surface**. Do not build both a full UI and a rich chat interface unless both are truly necessary.
+- Prefer **one reasoning layer**. Avoid multi-agent orchestration unless there are clearly separate agent roles.
+- Prefer **mocked external actions** before building real integration plumbing.
+- Prefer **chat + API** or **single UI + API** over multiple independently deployed surfaces.
+- Prefer **analytics over structured data** via Dremio / SQL before using RAG.
+- Prefer **RAG** only when the key value comes from documents, policies, or narrative knowledge.
+- Prefer **n8n** for approvals / orchestration, not for core application logic that should live in code.
 
-# n8n API key (if spec mentions n8n)
-cat /root/n8n-v2-api-key 2>/dev/null
+### Required output before Phase 2
 
-# LLM keys
-echo $OPENAI_API_KEY
-echo $ANTHROPIC_API_KEY
+Produce a short internal build summary:
+
+```md
+## Deployment Architecture Check
+- Selected architecture from spec:
+- Still best for POC speed? yes / no
+- Components to build now:
+- Components to defer:
+- Closest existing demo to reuse:
+- Notes on simplifications:
 ```
 
-### 1c — Validate n8n key if spec uses n8n
+If the answer is "no", simplify first and explain the change.
+
+---
+
+## Phase 2: Credential Pre-flight
+
+Run this before writing code or deploying anything.
+
+### 2a — Scan the spec for external systems
+
+Read Section 6, the mock/real map, and the component rationale. For every system or component that is not mocked, verify the required credential.
+
+### 2b — Check core credentials
+
+```bash
+# Preferred identity for GraphQL deployment calls
+export USER_EMAIL="${USER_EMAIL:-$KAJI_USER}"
+
+# Git access
+cd /path/to/repo && git remote -v
+cat /root/.git-credentials 2>/dev/null
+
+# n8n (if used)
+cat /root/n8n-v2-api-key 2>/dev/null
+
+# LLM / platform keys
+printenv OPENAI_API_KEY
+printenv ANTHROPIC_API_KEY
+```
+
+If `USER_EMAIL` is still empty after the fallback, stop and ask the user to provide it.
+
+### 2c — Validate n8n if the spec uses it
 
 ```bash
 N8N_KEY=$(cat /root/n8n-v2-api-key 2>/dev/null)
-# Test it — 200 = valid, 401 = expired
-curl -s -o /dev/null -w "%{http_code}" \
-  -H "X-N8N-API-KEY: $N8N_KEY" \
-  "https://n8n-v2.dev.hyperplane.dev/api/v1/workflows?limit=1"
+curl -s -o /dev/null -w "%{http_code}"   -H "X-N8N-API-KEY: $N8N_KEY"   "https://n8n-v2.dev.hyperplane.dev/api/v1/workflows?limit=1"
 ```
 
-If expired or missing — **STOP**:
+If the key is missing or expired, stop and ask whether to:
+- provide a fresh key
+- skip workflow creation for now
+- deploy with the workflow mocked
 
-> "⚠️ n8n API key is [missing / expired].
->
-> **What won't work without it:** [list specific workflows from spec — e.g., 'briefing approval flow', 'exception detection webhook']
->
-> Get a fresh key: https://n8n-v2.dev.hyperplane.dev → Settings → API Keys → Create → save to `/root/n8n-v2-api-key`
->
-> Reply with the key, drop it in the file, or say 'skip n8n' to deploy without automation workflows."
+### 2d — Show the pre-flight summary
 
-Wait. Do not proceed until: valid key confirmed OR user says "skip n8n".
-
-### 1d — Show pre-flight summary and get confirmation
-
-```
+```text
 📋 Pre-flight — [POC Name]
 
+Architecture now: [chat + api / ui + api / workflow-first / etc.]
 Services to build: [list]
-Repos: robert-shakudo/[name] + devsentient/demos/[folder]
+Components deferred: [list]
+Repo: devsentient/demos/[folder]
 
 Credentials:
-  ✅ GitHub token — valid
-  ✅ USER_EMAIL — robert@shakudo.io
-  ✅ OPENAI_API_KEY — set (mock mode)
-  ⚠️ n8n API key — EXPIRED → [waiting for new key]
+  ✅ USER_EMAIL
+  ✅ git credentials
+  ✅ OPENAI_API_KEY / ANTHROPIC_API_KEY
+  ⚠️ n8n key — [missing / expired / not needed]
 
 What works in mock mode:
-  ✅ [service] — fully functional with mock data
+  ✅ [list]
 
 What requires a real key:
-  ⚠️ n8n approval workflow — blocked until key is updated
+  ⚠️ [list]
 
-ETA: ~10–15 min
-
-Proceed? (or provide missing keys first)
+ETA: [estimate]
+Proceed?
 ```
 
-**Do not start building until confirmed.**
+Do not start until the user confirms.
 
 ---
 
-## Phase 2: Build — Git Structure Rules
+## Phase 3: Build Rules and Git Structure
 
-Every new POC MUST match the exact structure of existing demos. No exceptions.
+### Repository convention
 
-### Repository Convention
+**Single deployment source of truth: `devsentient/demos`**
 
-**Single source of truth: `devsentient/demos`**
-
-All POC code lives in the `devsentient/demos` monorepo as a subfolder. No separate per-client repos required.
+All deployable POC code lives in the demos monorepo as a subfolder.
 
 | Artifact | Pattern | Example |
 |---|---|---|
-| Demos monorepo folder | `devsentient/demos/{client}-{type}` | `devsentient/demos/dynex-mbs` |
-| Folder name convention | `{client}-{type}` (no `-demo` suffix) | `dynex-mbs`, `gallo-freight-exception-hub` |
-| Shakudo service names | `{client}-{type}-api`, `{client}-{type}-ui` | `dynex-mbs-api`, `dynex-mbs-ui` |
+| Monorepo folder | `{client}-{type}` | `dynex-mbs` |
+| Service names | `{client}-{type}-api`, `{client}-{type}-ui` | `dynex-mbs-api` |
 | Live URLs | `{service-name}.dev.hyperplane.dev` | `dynex-mbs-ui.dev.hyperplane.dev` |
 
-> **Note:** If a separate per-client repo exists (e.g. `robert-shakudo/dynex-mbs-demo`), it can be kept private as an archive — but it is NOT the deployment source. `devsentient/demos` is the only repo the Shakudo platform reads from.
+### Required file structure
 
-### Required File Structure (every demo must have ALL of these)
-
-```
-{client}-{type}/                    ← folder in devsentient/demos
-├── README.md                       ← architecture + usage + KPIs + local dev
-├── APP_INFO_AND_ARCHITECTURE.md    ← technical topology diagram + env vars table
+```text
+{client}-{type}/
+├── README.md
+├── APP_INFO_AND_ARCHITECTURE.md
 ├── api/ or backend/
 │   ├── main.py (or app.py)
 │   ├── requirements.txt
 │   └── run.sh
-├── ui/ or frontend/                ← only if spec has a frontend
+├── ui/ or frontend/              # only if a frontend is truly needed
 │   ├── package.json
 │   ├── src/
 │   └── run.sh
 └── skill/
-    ├── SKILL.md                    ← Kaji chat skill (YAML frontmatter + commands)
-    └── README.md                   ← skill install guide
+    ├── SKILL.md
+    └── README.md
 ```
 
-### run.sh — always follow this exact format
+### `run.sh` defaults
 
-**Backend:**
+**Backend**
 ```bash
 #!/bin/bash
 set -e
@@ -198,7 +262,7 @@ pip install -q -r requirements.txt
 uvicorn main:app --host 0.0.0.0 --port 8787 --workers 1
 ```
 
-**Frontend:**
+**Frontend**
 ```bash
 #!/bin/bash
 set -e
@@ -209,133 +273,224 @@ VITE_API_URL=https://{client}-{type}-api.dev.hyperplane.dev npm run build
 npx serve -s dist -l 8787
 ```
 
-### Git commit order
+### Git workflow
 
 ```bash
-# Single repo: push directly to devsentient/demos
 git clone --depth 1 https://${GH_TOKEN}@github.com/devsentient/demos.git /tmp/demos-build
 cp -r /tmp/{build-dir} /tmp/demos-build/{folder-name}/
 cd /tmp/demos-build
 
-# ⚠️ devsentient/demos .gitignore blocks *.csv — force-add any data files
-git add -f {folder}/api/data/*.csv 2>/dev/null || true
+git add -f {folder-name}/**/*.csv 2>/dev/null || true
 git add {folder-name}/
-git commit -m "feat({folder}): add [POC name] — [client]"
+git commit -m "feat({folder-name}): add [POC name]"
 git push origin main
 ```
 
-### skill/SKILL.md format (required in every demo)
-
-```yaml
----
-name: {client}-{type}
-description: "Chat-native interface to [POC name]. [2-sentence description]. Use when [trigger]."
-license: MIT
-compatibility: opencode
-metadata:
-  author: robert-shakudo
-  version: "1.0"
-  category: [ops|analytics|hr|supply-chain|etc]
-  tags: [relevant-tags]
----
-```
-
-Content sections: When to Activate, API endpoints used by skill, Behavior Guidelines (what to do for each trigger), Example Responses, Credentials Required.
+If data files are required, always force-add them if `.gitignore` blocks them.
 
 ---
 
-## Phase 3: Deploy
+## Phase 4: Deploy with `shakudo-microservice-lite`
 
-After code is in demos repo — wait for git server sync:
+Load `shakudo-microservice-lite` and follow its GraphQL workflow. This is the standard deployment path.
 
-```javascript
-shakudo-platform_checkGitServerSync()  // wait until IN_SYNC
-```
-
-Then deploy each service:
-
-```javascript
-shakudo-platform_createMicroservice({
-  name: "[service-name]",
-  userEmail: process.env.USER_EMAIL,
-  environment: "basic-ai-tools-small",  // "basic-medium" if run.sh uses apt-get
-  gitServer: "demos",
-  branch: "main",
-  port: 8787,
-  script: "[folder]/[api-or-ui]/run.sh",
-  parameters: [
-    { key: "OPENAI_API_KEY", value: "[mock-or-real]" }
-  ]
-})
-```
-
-For multi-service: create backend first, then frontend.
-
----
-
-## Phase 4: n8n Workflow Creation
-
-**Only if spec mentions n8n AND valid key was confirmed in Phase 1.**
+### 4a — Deployment prerequisites
 
 ```bash
-N8N_KEY=$(cat /root/n8n-v2-api-key)
-
-# Create workflow
-curl -s -X POST "https://n8n-v2.dev.hyperplane.dev/api/v1/workflows" \
-  -H "X-N8N-API-KEY: $N8N_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{ ...workflow JSON from spec build brief... }'
-
-# Activate it
-curl -s -X POST "https://n8n-v2.dev.hyperplane.dev/api/v1/workflows/{id}/activate" \
-  -H "X-N8N-API-KEY: $N8N_KEY"
+ENDPOINT=http://api-server.hyperplane-core.svc.cluster.local:80/graphql
+JQ_REQUIRED=true
 ```
 
-If key was skipped → attach workflow JSON in thread:
-> "n8n workflow not created (key skipped). Import manually:
-> n8n v2 → New Workflow → ⋮ → Import from file → Activate"
+The repo mount inside deployed services is always rooted at:
 
----
-
-## Phase 5: Poll & Verify
-
-Poll each service until `running` (5 min timeout):
-
-```javascript
-shakudo-platform_searchMicroservice({ searchTerm: "[service-name]" })
+```bash
+/tmp/git/monorepo
 ```
 
-Common failures:
+Do not derive container paths from your local checkout path.
 
-| Log pattern | Root cause | Fix |
+### 4b — Verify local repo state
+
+Use the bundled script from the lite skill:
+
+```bash
+bash /skills/shakudo-microservice-lite/scripts/check-local-git-sync.sh /path/to/repo
+```
+
+Stop if the target repo is:
+- dirty
+- behind
+- ahead
+- diverged
+- missing an upstream
+
+Exception: if the repo is dirty only because of unrelated files outside the target app path, inspect carefully before blocking the deploy.
+
+### 4c — Resolve the correct git server
+
+Do not assume `demos` blindly. Resolve it from the repo remote URL via the lite skill's `hyperplaneVCServers` query.
+
+Confirm:
+- `gitServerName`
+- `gitSyncStatus`
+- `lastSyncedCommitHash`
+- `defaultBranch`
+
+### 4d — Confirm git server sync
+
+Compare:
+- target branch HEAD on GitHub
+- local `HEAD` if you edited code locally
+- git server `lastSyncedCommitHash`
+- git server `gitSyncStatus`
+
+Rules:
+- if you changed code locally, local `HEAD` must equal the branch commit you intend to deploy, and that commit must equal `lastSyncedCommitHash`
+- if `gitSyncStatus` looks unhealthy, stop and inspect before create
+- if `lastSyncedCommitHash` is null, do not deploy
+- if the local repo is behind and you need to edit anything, pull first
+
+### 4d.1 — Special case: library redeploy with no code edits
+
+If you are redeploying an unchanged library POC and **not** using local edits as the source of truth, the local checkout may lag behind the synced git server commit.
+
+That is acceptable only if:
+- the service definition comes from the registry or the already-pushed repo
+- you are not deploying uncommitted or unpublished local changes
+- the git server is in sync with the remote branch you intend to deploy
+
+When in doubt, pull latest and use the synced commit as the deployment source of truth.
+
+### 4e — Choose the correct path pairing
+
+Use one of the two valid patterns from the lite skill:
+
+**Pattern A — app directory working dir**
+```bash
+WORKING_DIR="/tmp/git/monorepo/my-app/"
+PIPELINE_PATH="run.sh"
+```
+
+**Pattern B — repo root working dir**
+```bash
+WORKING_DIR="/tmp/git/monorepo/"
+PIPELINE_PATH="my-app/run.sh"
+```
+
+Current demo-library services usually use **Pattern B**.
+
+### 4f — Resolve deployment parameters before create
+
+Build the final parameter set in this order:
+1. user-provided real credential
+2. mounted credential already present in the environment
+3. explicit mock default from the spec or registry
+4. empty string only when the app intentionally supports it
+
+Before create, write down a short resolved parameter table:
+
+| Key | Source | Mode |
 |---|---|---|
-| `No such file or directory: run.sh` | Wrong `script` path / folder name mismatch | Check demos repo sync, verify folder |
-| `*.csv not found` | .gitignore blocked data file | Re-add with `git add -f`, push, restart |
-| `ModuleNotFoundError` | Missing requirement | Fix requirements.txt, push, restart |
-| `Address already in use` | Old service still running | Scale down first |
+| `OPENAI_API_KEY` | mounted env | real |
+| `N8N_WEBHOOK_URL` | registry default | mock |
+
+Never omit an environment variable that `run.sh` or the app expects if the POC depends on it being present, even if the value is mocked.
+
+### 4g — Create the service
+
+Use the lite skill's `createShakudoService` mutation with:
+- `jobName`
+- `subdomain`
+- `jobType`
+- `pipelineYamlPath`
+- `workingDir`
+- `port`
+- `gitServerName`
+- `branchName`
+- `userEmail`
+- `parameters`
+
+Minimal mutation shape:
+
+```graphql
+mutation CreateShakudoService($input: CreateShakudoServiceInput!) {
+  createShakudoService(input: $input) {
+    id
+    jobName
+    status
+  }
+}
+```
+
+For multi-service apps:
+1. backend / API first
+2. frontend second
+3. worker / cron / webhook services after the API is stable
+
+### 4h — Poll the PipelineJob
+
+A successful create response is **not** a successful deployment.
+
+After create, poll `pipelineJobs` by job ID and confirm:
+- status moves beyond the initial pending state
+- `workerPodName` becomes non-null when the backing service is actually materializing
+- `exposedPort` is correct
+
+If the platform status strings are ambiguous, wait for a worker pod or a reachable service URL before claiming success.
+
+### 4i — Inspect events and logs if stuck
+
+If the job stays pending or status is unclear, use `getPodEvents` from the lite skill.
+
+Treat a long-lived `pending` job with `workerPodName: null` as a platform reconciliation blocker, not proof that the app code is broken.
+
+### 4j — Verify the in-cluster service URL
+
+Derive the internal URL from the first segment of the job ID:
+
+```bash
+JOB_PREFIX="${JOB_ID%%-*}"
+INTERNAL_URL="http://hyperplane-service-${JOB_PREFIX}.hyperplane-pipelines.svc.cluster.local:${PORT}"
+PUBLIC_URL="https://${SUBDOMAIN}.dev.hyperplane.dev"
+```
+
+Only curl the internal URL after the PipelineJob has actually materialized into a running service.
+
+## Phase 5: n8n Workflow Creation
+
+Only run this phase if the spec explicitly uses n8n **and** the API key was validated in Phase 2.
+
+If the key is unavailable, deploy the app with the workflow mocked and attach the workflow JSON or import steps for later.
 
 ---
 
 ## Phase 6: E2E Smoke Test
 
-After all services reach `running`, test every API endpoint from the spec using the internal cluster URL (bypasses Istio auth):
+Smoke test every deployed service from the internal cluster URL first.
 
 ```bash
-BASE="http://hyperplane-service-[id].hyperplane-pipelines.svc.cluster.local:8787"
-curl -s "$BASE/health"                    # health check
-curl -s "$BASE/[key-endpoint-1]"          # business endpoints
-curl -s -o /dev/null -w "%{http_code}" "$BASE/"  # frontend loads
+curl -s "$INTERNAL_URL/health"
+curl -s "$INTERNAL_URL/[key-endpoint]"
+curl -s -o /dev/null -w "%{http_code}" "$INTERNAL_URL/"
 ```
 
-Report as a table. Fix any `500` errors before reporting URLs — check logs, push fix, restart, retest.
+Report results as a table.
+
+| Service | Check | Expected | Result |
+|---|---|---|---|
+| [service] | `/health` | 200 / JSON OK | |
+| [service] | key business path | correct JSON / HTML | |
+| [service] | UI root | 200 / 302 | |
+
+Do not share URLs with the user until the key paths pass.
 
 ---
 
 ## Phase 7: Return Live URLs
 
-Only after smoke tests pass:
+After smoke tests pass, return:
 
-```
+```text
 ✅ [POC Name] is live
 
 Frontend    → https://[name]-ui.dev.hyperplane.dev
@@ -343,157 +498,143 @@ API         → https://[name]-api.dev.hyperplane.dev
 GitHub      → https://github.com/devsentient/demos/tree/main/[folder]
 ClickUp     → https://app.clickup.com/t/[id]
 
-Running with: mock [systems list]
-n8n:        ✅ [workflow] active  /  ⚠️ skipped (key not provided)
+Running with:
+  mock systems: [list]
+  real systems: [list]
+  deferred components: [list]
 
 To go live with real credentials:
-  [ENV_VAR]  →  [description]
-
-Kaji skill: [skill-name]
-Install:    openskills install robert-shakudo/[repo]/skill
+  [ENV_VAR] → [what it unlocks]
 ```
+
+Always mention the **mock vs real** status and any intentionally deferred components.
 
 ---
 
-## Phase 8: Update POC Registry
+## Phase 8: Update the POC Registry
 
-Add the new POC to `poc-registry.md` in this skill repo and commit:
+If you build or materially change a POC, update [POC Registry](./references/poc-registry.md) so future deploys can recreate it deterministically.
 
-```bash
-# Edit /root/.claude/skills/kaji-poc-build-deploy/references/poc-registry.md
-# Follow the exact format of existing entries
-# Commit and push to robert-shakudo/robs-skills
-```
-
----
-
-## Credential Upgrade (Go-Live)
-
-When user provides real credentials after initial mock deploy:
-
-```javascript
-// Recreate with real params
-shakudo-platform_deleteMicroservice({ id: "[id]", confirm: true })
-shakudo-platform_createMicroservice({
-  ...same config...,
-  parameters: [{ key: "OPENAI_API_KEY", value: "sk-real-key" }]
-})
-```
+Capture:
+- job name and subdomain
+- job type
+- working dir and pipeline path pairing
+- deploy order
+- lifecycle mode (`lite-create-delete` or fuller lifecycle if available)
+- required parameters and their default/mock behavior
+- smoke tests
+- recreate notes for lite-only stop/start flows
 
 ---
 
-## Stop / Teardown
+## Credential Upgrade / Go-Live Refresh
 
-### Trigger Phrases
+When the user provides real credentials later:
 
-- "stop the [name] POC"
-- "shut down the [name] services"
-- "scale down [name]"
-- "pause the [name] POC"
-- "take down everything"
-- "stop all running POCs"
-- "delete the [name] POC" (only for full delete — confirm first)
+1. update the deployment parameters
+2. if using lite-only lifecycle, delete and recreate the affected service
+3. if the full microservice skill is available, use it for restart / scale workflows after config changes
 
-### Step 1 — Find the service IDs
-
-```javascript
-// Search by POC name
-shakudo-platform_searchMicroservice({ searchTerm: "[poc-name]" })
-// e.g. "dynex-mbs" returns dynex-mbs-api + dynex-mbs-ui
-```
-
-### Step 2 — Scale to zero (default)
-
-Scaling to zero stops the pods but **preserves the service config**. The POC can be restarted instantly without rebuilding.
-
-```javascript
-// Stop one service
-shakudo-platform_scaleService({ id: "[service-id]", newReplicas: 0 })
-
-// For multi-service POCs — stop all services found in Step 1
-// Run for each service ID returned by the search
-```
-
-After scaling to zero, confirm:
-```
-⏹️ [POC name] stopped.
-  [service-1] — scaled to 0 (config preserved)
-  [service-2] — scaled to 0 (config preserved)
-
-To restart: @kaji restart the [name] POC
-To delete permanently: @kaji delete the [name] POC
-```
-
-### Step 3 (optional) — Full delete
-
-Only do this if the user says **"delete"**, **"remove"**, or **"permanently remove"**. Always confirm first:
-
-> "⚠️ This will permanently delete [service-name] and all its config. Are you sure? (yes/no)"
-
-```javascript
-// Only after explicit confirmation
-shakudo-platform_deleteMicroservice({ id: "[service-id]", confirm: true })
-```
-
-### Restart after scale-to-zero
-
-If the service config still exists (was scaled to zero, not deleted):
-
-```javascript
-shakudo-platform_scaleService({ id: "[service-id]", newReplicas: 1 })
-// or
-shakudo-platform_restartService({ id: "[service-id]" })
-```
-
-### Stop all running POCs
-
-When user says "stop everything" or "scale down all POCs":
-
-```javascript
-// Search for each known POC name and scale all to zero
-const pocs = ["dynex-mbs", "gallo", "hr-resume", "reagan", "campbell"]
-// For each: searchMicroservice → get IDs → scaleService to 0
-```
-
-Always list what was stopped and confirm each.
+Always explain whether the refresh will be destructive.
 
 ---
+
+## Start / Stop / Restart / Delete
+
+`shakudo-microservice-lite` is **minimal lifecycle only**. It supports create, inspect, and delete. It does **not** provide scale-to-zero or non-destructive restart operations.
+
+### Lifecycle policy
+
+| User intent | Preferred path | Lite-only fallback |
+|---|---|---|
+| Start a missing service | Create from registry config | Same |
+| Start an existing but stopped service | Use full `shakudo-microservice` if scale / restart is available | Delete exact old service ID + recreate after confirmation |
+| Stop a running service | Scale to 0 with full skill if available | Lite cannot pause; delete only after explicit confirmation |
+| Restart a running service | Restart with full skill if available | Delete + recreate after explicit confirmation |
+| Delete permanently | Delete by exact ID | Same |
+
+### Search first
+
+Always resolve the exact service ID before any destructive action:
+- search by job name
+- if multiple matches exist, ask the user which one
+- never delete by guessed name alone
+
+### Lite-mode start decision tree
+
+If only lite is available:
+1. search for the exact service name
+2. if there is **no existing service**, create from the registry or build brief
+3. if there is an existing service that is already healthy, tell the user it is already running
+4. if there is an existing service in a stopped / failed / stale state, explain that lite mode requires delete + recreate
+5. get explicit confirmation before deleting the old ID
+6. recreate, poll, and smoke test again
+
+### Lite-mode stop behavior
+
+If only lite is available, say this clearly:
+
+> "I can recreate or delete this service with `shakudo-microservice-lite`, but I cannot scale it to zero non-destructively. Do you want me to delete it?"
+
+### Lite-mode restart behavior
+
+If the user says restart and only lite is available:
+1. confirm delete + recreate is acceptable
+2. delete by exact ID
+3. recreate from the registry / build brief config
+4. poll and smoke test again
+
+### Stop all POCs
+
+If the user asks to stop everything and only lite is available:
+- list every service that would be deleted in `jobName (id)` format
+- ask for explicit confirmation
+- delete each by exact ID
+- report the deleted IDs and any recreate notes needed later
 
 ## Execution Checklist
 
-- [ ] ClickUp spec read — all required sections present (Phase 0)
-- [ ] All external systems identified from spec
-- [ ] n8n key checked and validated if spec uses n8n (Phase 1c)
-- [ ] GitHub token confirmed valid
-- [ ] Pre-flight summary shown — user confirmed before any code written
-- [ ] Git structure follows standard: README, APP_INFO, run.sh, api/, ui/, skill/ (Phase 2)
-- [ ] Code pushed to `robert-shakudo/{name}` first
-- [ ] Mirrored to `devsentient/demos/{folder}/`
-- [ ] Data files force-added if blocked by .gitignore (`git add -f *.csv`)
-- [ ] `demos` git server confirmed IN_SYNC before deploy
-- [ ] All services created with correct `script` paths
-- [ ] n8n workflows created via API (or JSON exported if key skipped)
-- [ ] All services polled to `running`
-- [ ] E2E smoke test run — all 500s fixed before reporting URLs
-- [ ] Live URLs returned with mock/real status + go-live credential path
-- [ ] POC registry updated
+- [ ] ClickUp spec read and validated
+- [ ] Architecture sanity check completed
+- [ ] Build-now vs defer decision recorded
+- [ ] Mock / real systems reviewed
+- [ ] USER_EMAIL resolved
+- [ ] Git credentials verified
+- [ ] n8n key checked if needed
+- [ ] User confirmed pre-flight summary
+- [ ] Repo structure follows demo conventions
+- [ ] Code pushed to `devsentient/demos`
+- [ ] Local repo sync checked with `check-local-git-sync.sh`
+- [ ] Git server resolved from remote URL
+- [ ] `lastSyncedCommitHash` matches local HEAD
+- [ ] `workingDir` / `pipelineYamlPath` pairing chosen correctly
+- [ ] Final parameter set resolved and reviewed
+- [ ] Services created in the right order
+- [ ] PipelineJobs polled beyond initial pending state
+- [ ] Internal smoke tests passed
+- [ ] URLs returned with mock / real / deferred notes
+- [ ] Registry updated if the deployment shape changed
+- [ ] Destructive recreate confirmed if lite-only fallback was used
 
 ---
 
-## Anti-Patterns (learned from Dynex)
+## Anti-Patterns
 
-- **Never start building if spec is missing Build Brief** — validate Phase 0 before any code
-- **Never discover a missing credential mid-flight** — Phase 1 runs before Phase 2, always
-- **Never assume n8n key is valid** — always validate with a live `401/200` check
-- **Never ignore `.gitignore` for data files** — demos repo blocks `*.csv`, force-add explicitly
-- **Never use a different folder structure than existing demos** — README, APP_INFO, run.sh, skill/ are required
-- **Never report live URLs before smoke tests pass** — fix 500s first
-- **Never create n8n workflows with an expired key** — export JSON as fallback, never guess
+- **Do not deploy from a dirty or unsynced repo.**
+- **Do not assume the git server name.** Resolve it.
+- **Do not treat a stale local library checkout as authoritative if the synced git server is newer.** Pull or explicitly rely on the synced remote commit.
+- **Do not assume `createShakudoService` means running.** Poll `pipelineJobs`.
+- **Do not derive container paths from your local checkout path.** Use `/tmp/git/monorepo`.
+- **Do not use lite delete as a hidden stop action.** Tell the user it is destructive.
+- **Do not keep every component from the spec if they are unnecessary for the POC.** Simplify first.
+- **Do not report URLs before smoke tests pass.**
+- **Do not build n8n workflows with an expired key.** Mock or export instead.
 
 ---
 
 ## Related Skills
 
-- **kaji-poc-spec-builder** — Phase 1: generate the spec this skill builds and deploys
-- **shakudo-microservice** — Low-level platform reference
+- **kaji-poc-spec-builder** — Phase 1: generates the spec and component-selection rationale
+- **shakudo-microservice-lite** — Standard deployment workflow for create / inspect / delete
+- **shakudo-microservice** — Optional full-lifecycle operations when scale / restart is available
 - **kaji-agentic-engineering-estimator** — Price the engagement after the POC is built

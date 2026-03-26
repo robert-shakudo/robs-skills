@@ -1,52 +1,55 @@
 # kaji-poc-spec-builder
 
-**Convert any client use case into a complete, buildable POC spec — in one Kaji conversation.**
+**Convert a client use case into a complete, buildable POC spec and architecture decision package.**
+
+This skill does more than write a nice requirements doc. It analyzes alternative architectures, chooses the best Shakudo component stack for the use case, explains what should be built now vs later, and produces a deployment-ready build brief for `kaji-poc-build-deploy`.
 
 ---
 
-## How This Skill Works
+## What this skill now produces
 
-When you trigger this skill, Kaji loads the following and uses them to run:
-
-| File | What It Does |
-|------|-------------|
-| `SKILL.md` | Execution logic — the phases, rules, output format, anti-patterns, and checklist Kaji follows |
-| `assets/app-spec-template.md` | The 13-section spec template (sections 0–12) that gets filled out |
-| `assets/demo-architecture-template.md` | Mock/real system map + POC build brief format |
-| `references/shakudo-platform-capabilities.md` | Catalog of Shakudo and Kaji components — used to map app functions to platform components |
-| `references/mock-patterns.md` | Standard mock strategies by system type (CRM, ERP, DB, etc.) — used to fill the mock/real map |
-| `references/demo-library.md` | Library of existing POCs (Gallo, Reagan, HR Resume, Campbell, Dynex) — used to identify what to fork |
-
-**Context Kaji reads before asking you anything:**
-- ClickUp task (description, comments, subtasks)
-- Mattermost channel or thread (for context, decisions, corrections)
-- Notion pages (for client architecture, infra details, security posture)
-- Fireflies meeting summaries (for pain points, agreed scope, systems mentioned)
-- Anything you paste directly
-
-**Instructions Kaji follows:**
-- Research first, ask questions second
-- Ask if client infra is known or should default to Shakudo dev
-- Show the full spec before offering any ClickUp update
-- Ask if you want a walk-through (never auto-generates it)
-- Write output into ONE ClickUp task, no subtasks
-- Never use "demo" language — it's a POC
-- Never describe a live build — the POC is always pre-built
+For a Full Spec, Kaji should deliver:
+- full app spec (sections 0–12)
+- architecture options considered
+- recommended build strategy
+- component selection rationale
+- mock / real system map
+- Shakudo build stack / platform map
+- service deployment specs
+- POC build brief
+- optional presenter walk-through
 
 ---
 
-## Trigger Phrases
+## How this skill works
 
-```
+Kaji loads and uses the following files:
+
+| File | What it does |
+|---|---|
+| `SKILL.md` | Execution flow, rules, anti-patterns, and output order |
+| `assets/app-spec-template.md` | Sections 0–12 of the core application spec |
+| `assets/demo-architecture-template.md` | Architecture analysis, build stack, service deployment spec, and build brief format |
+| `references/shakudo-platform-capabilities.md` | Best-practice component catalog and architecture patterns |
+| `references/component-selection-rubric.md` | Decision framework for choosing the right Shakudo stack |
+| `references/mock-patterns.md` | Standard mock strategies by system type |
+| `references/demo-library.md` | Existing POCs to reuse or fork |
+
+---
+
+## Trigger phrases
+
+```text
 @kaji build me a spec for [client] — [use case]
-@kaji spec this out: [paste notes / email / problem]
+@kaji spec this out: [problem / notes]
 @kaji build a spec from this ClickUp task: [URL]
-@kaji rewrite this into a spec: [URL or paste]
-@kaji what would we build for [client/problem]?
+@kaji rewrite this into a buildable POC
+@kaji what would we build for [client / problem]?
 ```
 
-To print the walk-through at any time:
-```
+Walk-through on demand:
+
+```text
 @kaji show me the walk-through
 @kaji walk-through for this spec
 @kaji how do we present this POC?
@@ -54,113 +57,58 @@ To print the walk-through at any time:
 
 ---
 
-## What Happens Step by Step
+## What Kaji should do step by step
 
-**1. Kaji reads all available sources first**
-Before asking anything, Kaji reads the ClickUp task, Mattermost thread, Notion pages, or Fireflies meeting you pointed to. It summarizes what it found in 2–3 sentences and proceeds.
-
-**2. Kaji asks the infrastructure question**
-> *"Do you have the client's infrastructure details (cloud, auth, LLM setup)? Or should I default to Shakudo dev for the POC and mark go-live as TBD?"*
-
-- **If you have it** → client infra fills Section 0, Section 6, and the environment table
-- **If not** → POC uses `dev.hyperplane.dev` (Shakudo GCP), go-live marked `[TBD]`
-
-**3. Kaji asks up to 3 more questions** (only if critical info is still missing)
-- Who is the primary user?
-- What are they doing manually today?
-- What makes this POC successful for the client?
-
-**4. Kaji fetches the client website** (if client name is known)
-- Section 0: company background, industry, size, tech environment
-- Section 12: brand colors, font, logo
-- Done in one pass
-
-**5. Kaji builds and shows the full spec**
-- Sections 0–12 (no placeholders)
-- Mock/Real System Map with environment table
-- Shakudo Platform Map
-
-**6. Kaji asks if you want a walk-through**
-> *"Do you want a POC walk-through added?"*
-
-- **Yes** → generates the presenter flow table (5–10 steps with talking points) and shows it
-- **No** → skips it
-- Walk-through is **not included** in the ClickUp task — it's a separate presenter output only
-
-**7. Kaji offers to update ClickUp**
-- Writes the full spec into ONE task, no subtasks
-- Description IS the spec
+1. **Read all available sources first** — ClickUp, Mattermost, Notion, Fireflies, pasted notes.
+2. **Ask only a few questions if needed** — max 3, after reading everything.
+3. **Ask the infrastructure question** — default the POC to Shakudo dev if client infra is unknown.
+4. **Classify the app type** — operational assistant, analytics, workflow automation, knowledge assistant, multi-agent, or hybrid.
+5. **Evaluate multiple architecture options** — do not jump straight to one stack.
+6. **Choose the best component stack** — based on the component selection rubric.
+7. **Write the full spec** — sections 0–12.
+8. **Produce the architecture package** — build strategy, build stack, deployment specs, build brief.
+9. **Show the output before offering a ClickUp update**.
 
 ---
 
-## What You Get
+## Best-practice philosophy
 
-```
-Section 0   Company Introduction (who they are, size, tech env, audience)
-Section 1   Overview (app name, purpose, users, problem)
-Section 2   What the App Does
-Section 3   Core Experience (step-by-step user flow)
-Section 4   Key Capabilities (App Functions)
-Section 5   Intelligence Layer (LLM, agent, tools)
-Section 6   Systems Connected (with mock status + environment)
-Section 7   Example User Journey
-Section 8   Example Interaction (real message + real response)
-Section 9   What Makes This Valuable
-Section 10  Scope for POC (in / out / Year 2)
-Section 11  Future Enhancements
-Section 12  Design, UI & UX (brand colors, components, layout)
+This skill should bias toward:
+- the **simplest credible POC**
+- **reuse of existing demo patterns**
+- **one primary user surface** unless more is truly necessary
+- **explicit reasoning** about why Kaji, microservices, n8n, Dremio, RAG, or other components are used
+- **clear separation** between what is built now, mocked now, and deferred to later phases
 
-Mock/Real System Map
-  ├── System | Status | Mock Strategy | Real Integration | What Changes on Go-Live
-  └── Environment: POC (Shakudo dev.hyperplane.dev) → Go-Live (client env)
-
-Shakudo Platform Map
-  └── App Function | Shakudo Component | Role
-
-POC Build Brief
-  ├── Environment vars (dev block + go-live block)
-  ├── Build checklist (checkboxes)
-  ├── Acceptance criteria (checkboxes)
-  └── Go-live requirements from client (checkboxes)
-
-Walk-Through (optional, on request only — not in ClickUp)
-  └── Step | User Does | App Does | Talking Point
-```
+It should avoid:
+- overbuilding
+- defaulting to multi-agent designs
+- adding RAG when the value is actually structured analytics
+- adding a full custom UI when chat is enough
+- vague build briefs with missing deployment details
 
 ---
 
-## Key Rules (Built Into the Skill)
+## File structure
 
-| Rule | Why |
-|------|-----|
-| POC is always pre-built | Client sees a working app, not a construction site |
-| POC runs in Shakudo dev (GCP) | Fastest to build and demo; same app deploys to client env on go-live |
-| One ClickUp task, no subtasks | Description IS the full spec — everything in one place |
-| Walk-through is optional and separate | Presenter flow ≠ build spec; not everyone needs it |
-| Show spec before offering ClickUp update | You read it first, then decide what to do |
-| Ask about infra before assuming | Client stack is often different from what's in the task |
-
----
-
-## File Structure
-
-```
+```text
 kaji-poc-spec-builder/
-├── SKILL.md                                  ← Execution logic Kaji follows
-├── README.md                                 ← This file
+├── SKILL.md
+├── README.md
 ├── assets/
-│   ├── app-spec-template.md                  ← 13-section spec template (sections 0–12)
-│   └── demo-architecture-template.md         ← Mock/real map + build brief format
+│   ├── app-spec-template.md
+│   └── demo-architecture-template.md
 └── references/
-    ├── shakudo-platform-capabilities.md       ← Kaji, n8n, microservice, Dremio, Arize Phoenix
-    ├── mock-patterns.md                       ← Mock strategies by system type
-    └── demo-library.md                        ← Existing POCs: Gallo, Reagan, HR, Campbell, Dynex
+    ├── shakudo-platform-capabilities.md
+    ├── component-selection-rubric.md
+    ├── mock-patterns.md
+    └── demo-library.md
 ```
 
 ---
 
-## Related Skills
+## Related skills
 
-- **kaji-agentic-engineering-estimator** — Price the engagement from the spec
-- **kaji-client-onboarding** — Plan the full deployment after the POC is approved
-- **rob-weekly-proserve-update** — Track POC builds and client activity in weekly reports
+- **kaji-poc-build-deploy** — builds and deploys the chosen architecture
+- **kaji-agentic-engineering-estimator** — prices the work after the spec is approved
+- **kaji-client-onboarding** — plans implementation after the POC is validated

@@ -1,119 +1,230 @@
-# Demo Architecture — [App Name]
+# POC Architecture & Build Plan — [App Name]
 
-> Output this alongside the App Spec for every Full Spec + POC Architecture request.
+> Output this alongside the app spec for every Full Spec request. This is the architecture decision package that `kaji-poc-build-deploy` should be able to consume.
+
+---
+
+## Architecture Options Considered
+
+Compare at least 2 options. For non-trivial use cases, compare 3.
+
+| Option | Interaction Model | Core Components | Closest Reuse Pattern | Why It Could Work | Why It Might Be Wrong | Verdict |
+|---|---|---|---|---|---|---|
+| Option A | [chat-first / UI-first / workflow-first / hybrid] | [Kaji, microservice, n8n, Dremio, RAG, etc.] | [demo / none] | | | |
+| Option B | | | | | | |
+| Option C *(optional)* | | | | | | |
+
+---
+
+## Architecture Scorecard
+
+Use the scorecard to compare the candidate options.
+
+| Option | Credibility | Simplicity | Reuse | Mockability | Extensibility | Fit | Summary |
+|---|---|---|---|---|---|---|---|
+| Option A | H/M/L | H/M/L | H/M/L | H/M/L | H/M/L | H/M/L | |
+| Option B | H/M/L | H/M/L | H/M/L | H/M/L | H/M/L | H/M/L | |
+| Option C | H/M/L | H/M/L | H/M/L | H/M/L | H/M/L | H/M/L | |
+
+---
+
+## Recommended Build Strategy
+
+**App Type:** [Operational Assistant / Data & Analytics / Workflow Automation / Knowledge Assistant / Multi-Agent / Hybrid]
+
+**Primary Interaction Model:** [chat-first / UI-first / workflow-first / analytics-first / hybrid]
+
+**Recommended Architecture:**
+[One paragraph describing the chosen architecture in plain English. Example: “Kaji handles the natural-language workflow, a FastAPI microservice owns business logic and state, and n8n handles the approval callback.”]
+
+**Best Component Stack:**
+- [Component]
+- [Component]
+- [Component]
+
+**Closest Existing Demo to Reuse:**
+[Name of existing demo] — [why it is the best reference]
+
+**Components to Build Now:**
+- [Component / service]
+- [Component / service]
+
+**Components to Mock Now:**
+- [System / workflow / dependency]
+- [System / workflow / dependency]
+
+**Components to Defer to Year 2:**
+- [Enhancement]
+- [Enhancement]
+
+**Why this is the best POC choice:**
+[2–4 sentences. Focus on credibility, speed to value, and why it is easier to demo than the rejected alternatives.]
+
+---
+
+## POC Simplification Decisions
+
+| Decision | Keep / Remove / Mock / Defer | Why |
+|---|---|---|
+| [Custom UI] | [Keep / Remove / Mock / Defer] | |
+| [Workflow integration] | | |
+| [Advanced analytics / memory / agent roles] | | |
+
+---
+
+## Component Selection Rationale
+
+| Need / Function | Recommended Component | Why This Component Fits | Build Now or Later |
+|---|---|---|---|
+| Natural language interface | Kaji | [why] | Now |
+| [Need] | [Component] | [why] | [Now / Later] |
+| [Need] | [Component] | [why] | [Now / Later] |
+
+**Alternatives rejected:**
+- [Rejected component or pattern] — [why it was not chosen]
+- [Rejected component or pattern] — [why it was not chosen]
 
 ---
 
 ## Mock / Real System Map
 
-For each system in the spec, define the mock strategy and real integration path.
+| System | Type | Status | Mock Strategy | Real Integration Path | What Changes on Go-Live | Owner |
+|---|---|---|---|---|---|---|
+| [System] | [CRM / ERP / DB / API] | ✅ / 🟡 / 🔴 | | | | |
+| [System] | | | | | | |
 
-| System | Type | Demo Status | Mock Strategy | Real Integration Path | Owner |
-|--------|------|-------------|--------------|----------------------|-------|
-| [System] | [CRM/ERP/DB/API] | ✅ Available | Live integration | — | Shakudo |
-| [System] | [Type] | 🟡 Mocked | [How we fake it] | [What real looks like] | [Client / Shakudo] |
-| [System] | [Type] | 🔴 Custom Build | N/A — needs build | [What real looks like] | [Eng estimate needed] |
+**Status key:**
+- ✅ **Available now** — live integration or public data is enough
+- 🟡 **Mocked** — realistic fake for the POC, swappable later
+- 🔴 **Needs build** — custom connector or extra work required
 
-**Demo Status Key:**
-- ✅ **Available Now** — Shakudo has a live MCP or integration for this system
-- 🟡 **Mockable** — Realistic mock can be built in 1–2 days (seeded DB, hardcoded API, sample JSON)
-- 🔴 **Needs Custom Build** — New integration required; needs client credentials or custom connector (5–10 days)
+### Environment Table
 
----
-
-## Shakudo Platform Map
-
-Map each capability from the spec to the Shakudo component that delivers it.
-
-| Capability | Shakudo Component | Role in Demo |
-|------------|-------------------|--------------|
-| Natural language interface | Kaji (chat agent) | User asks questions, Kaji responds |
-| [Capability] | [Component] | [What it does in this demo] |
-| [Capability] | [Component] | [What it does in this demo] |
-| [Capability] | [Component] | [What it does in this demo] |
-
-**Component Reference:**
-- **Kaji** — AI agent layer (chat interface, reasoning, tool calling)
-- **Kaji MCP Skills** — Tool plugins that give Kaji access to systems
-- **Kaji RAG** — Document/knowledge search and retrieval
-- **Shakudo Microservice** — API backend or web frontend deployed on Shakudo
-- **n8n on Shakudo** — Workflow automation, event triggers, multi-step pipelines
-- **Dremio** — SQL query layer over data lakes and databases
-- **Shakudo Notebook** — Data exploration, ML model, analysis environment
+| Phase | Environment |
+|---|---|
+| Build & POC | `dev.hyperplane.dev` (Shakudo GCP) |
+| Go-Live | [Client cloud / on-prem / TBD] |
 
 ---
 
-## Demo Build Brief
+## Shakudo Build Stack (Platform Map)
 
-### What the Demo Shows
+| App Function | Shakudo Component | Role in the POC | Why It Is Included Now |
+|---|---|---|---|
+| [Function] | [Kaji / MCP Skill / Microservice / n8n / Dremio / RAG / Notebook / Phoenix / etc.] | | |
+| [Function] | [Component] | | |
+| [Function] | [Component] | | |
 
-[2–3 sentences describing the demo scenario. What does the user do? What does the app do? What's the "wow moment"?]
+---
 
-### 5-Minute Demo Script
+## Service Deployment Specs
+
+Provide one block per service. These should be explicit enough for `shakudo-microservice-lite`.
+
+```yaml
+- jobName: [service-name]
+  subdomain: [service-subdomain]
+  jobType: [basic-ai-tools-small / basic-medium / etc.]
+  gitServerName: [resolve from repo remote, often demos]
+  branchName: main
+  workingDir: /tmp/git/monorepo/
+  pipelineYamlPath: [app-folder]/[service]/run.sh
+  port: "8787"
+  deployOrder: 1
+  lifecycleMode: lite-create-delete
+  parameters:
+    - key: [ENV_VAR]
+      default: [mock-value-or-empty]
+      source: [real / mounted / mock]
+  smokeTests:
+    - path: /health
+      expected: 200
+  recreateNotes: [Delete + recreate if only lite lifecycle is available]
+```
+
+If using the app-directory pattern instead, make that explicit:
+
+```yaml
+workingDir: /tmp/git/monorepo/[app-folder]/
+pipelineYamlPath: run.sh
+```
+
+---
+
+## Deployment & Lifecycle Notes
+
+- **Preferred deploy order:** API/backend → UI/frontend → workers/webhooks.
+- **Parameter resolution order:** user-provided real secret → mounted credential → mock default.
+- **Lite lifecycle note:** if only `shakudo-microservice-lite` is available, stop and restart actions may require delete + recreate.
+- **Smoke tests must pass before sharing URLs.**
+
+---
+
+## What the POC Shows
+
+[2–3 sentences describing the user story, wow moment, and what gets demonstrated in the room.]
+
+---
+
+## 5-Minute Demo Script
 
 | Step | What the User Does | What the App Does | Talking Point |
-|------|-------------------|-------------------|---------------|
-| 1 | Opens the app / Kaji chat | — | "Here's what we built in [X days]" |
-| 2 | [User action] | [App response] | [Value statement] |
-| 3 | [User action] | [App response] | [Value statement] |
-| 4 | [User action] | [App response] | "In production, this connects to your real [system]" |
-| 5 | [User action] | [App response] | "To go live, you give us [what client needs to provide]" |
+|---|---|---|---|
+| 1 | Opens the app / Kaji chat | — | |
+| 2 | | | |
+| 3 | | | |
+| 4 | | | |
+| 5 | | | |
 
-### Components to Build
+---
+
+## Components to Build
 
 | Component | Type | Build Time | Notes |
-|-----------|------|------------|-------|
-| [Component name] | Kaji skill / Microservice / n8n workflow / UI | [Xh / Xd] | [Any notes] |
-| [Component name] | [Type] | [Time] | |
-| [Component name] | [Type] | [Time] | |
+|---|---|---|---|
+| [Component] | [Kaji skill / microservice / UI / workflow] | [Xh / Xd] | |
+| [Component] | | | |
 
 **Total Estimated Build Time:** [X days]
 
-### Mock Data Required
+---
+
+## Mock Data Required
 
 | Data Set | Format | Volume | Who Creates It |
-|----------|--------|--------|---------------|
-| [e.g., Sample CRM records] | [JSON / CSV / SQL seed] | [e.g., 50 records] | [Shakudo eng] |
-| [e.g., Mock API responses] | [Hardcoded JSON] | [e.g., 10 scenarios] | [Shakudo eng] |
+|---|---|---|---|
+| [Dataset] | [JSON / CSV / SQL seed] | [volume] | [owner] |
+| [Dataset] | | | |
 
-### Go-Live Requirements
+---
 
-What the client needs to provide to replace mocks with real systems:
+## Go-Live Requirements
 
 | Requirement | Type | Notes |
-|-------------|------|-------|
-| [e.g., Salesforce API credentials] | Credentials | [Any access level or permission notes] |
-| [e.g., ERP read access for [schema]] | Data access | [What queries we need to run] |
-| [e.g., Slack app approval] | Integration setup | [Steps to install Slack app] |
-
-### Closest Existing Demo
-
-[Name of the existing demo from the Demo Library that most closely matches this POC]
-
-**What to reuse:** [Which components, patterns, or code to copy from that demo]
-
-**What's different:** [What needs to be customized or built fresh]
+|---|---|---|
+| [Credential / access / infra item] | [Credentials / Data access / Approval / Security] | |
+| [Requirement] | | |
 
 ---
 
 ## Architecture Diagram (Text)
 
-```
-User (Mattermost / Web UI)
+```text
+User (Mattermost / Web UI / Analyst Screen)
         ↓
-   Kaji Agent
-        ↓ (tool calls)
-┌────────────────────────────────┐
-│ Skills / MCP Tools             │
-│  • [Skill 1] → [System/Mock]   │
-│  • [Skill 2] → [System/Mock]   │
-│  • [Skill 3] → [System/Mock]   │
-└────────────────────────────────┘
-        ↓ (optional)
-  n8n Workflow / Microservice
+Primary Interface Layer
         ↓
-  [Backend System / Mock DB]
+   Kaji / UI / Workflow Controller
+        ↓
+┌──────────────────────────────────┐
+│ Core Components                  │
+│  • [Component 1]                 │
+│  • [Component 2]                 │
+│  • [Component 3]                 │
+└──────────────────────────────────┘
+        ↓
+[Mock Systems / Real Systems / Data Layer]
 ```
 
-**Mock → Real Swap:**
-When ready, replace `[System/Mock]` with the live system integration. No other changes required.
+**POC simplification note:**
+[Explain what is intentionally mocked or deferred for speed.]

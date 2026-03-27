@@ -1,23 +1,27 @@
 # kaji-poc-spec-builder
 
-**Convert a client use case into a complete, buildable POC spec and architecture decision package.**
+**Convert a client use case into a client-facing POC spec plus an optional internal build/deploy brief.**
 
-This skill does more than write a nice requirements doc. It analyzes alternative architectures, chooses the best Shakudo component stack for the use case, explains what should be built now vs later, and produces a deployment-ready build brief for `kaji-poc-build-deploy`.
+This skill does more than write a nice requirements doc. It analyzes alternative architectures, chooses the best Shakudo component stack for the use case, explains what should be built now vs later, and can also produce a separate deployment-ready build brief for `kaji-poc-build-deploy` when needed.
 
 ---
 
 ## What this skill now produces
 
-For a Full Spec, Kaji should deliver:
-- full app spec (sections 0–12)
-- architecture options considered
-- recommended build strategy
-- component selection rationale
+For a Full Spec, Kaji should normally deliver:
+- client-facing app spec (sections 0–12)
+- client-safe architecture options considered
+- recommended build strategy / what is built now vs later
 - mock / real system map
-- Shakudo build stack / platform map
+- environment table
+- optional Shakudo build stack summary
+- optional presenter walk-through
+
+When an internal handoff is needed, it should also deliver a **separate internal build / deploy brief** with:
+- component selection rationale
 - service deployment specs
 - POC build brief
-- optional presenter walk-through
+- deployment / operator notes
 
 ---
 
@@ -65,9 +69,9 @@ Walk-through on demand:
 4. **Classify the app type** — operational assistant, analytics, workflow automation, knowledge assistant, multi-agent, or hybrid.
 5. **Evaluate multiple architecture options** — do not jump straight to one stack.
 6. **Choose the best component stack** — based on the component selection rubric.
-7. **Write the full spec** — sections 0–12.
-8. **Produce the architecture package** — build strategy, build stack, deployment specs, build brief.
-9. **Show the output before offering a ClickUp update**.
+7. **Write the client-facing spec** — sections 0–12 plus the client-safe architecture package.
+8. **Produce the internal build/deploy brief separately when needed** — build stack, deployment specs, build brief.
+9. **Show the client-facing output before offering a ClickUp update**.
 
 ---
 

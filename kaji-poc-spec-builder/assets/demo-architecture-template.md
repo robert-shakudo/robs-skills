@@ -1,12 +1,12 @@
-# POC Architecture & Build Plan — [App Name]
+# POC Architecture & Internal Build Plan — [App Name]
 
-> Output this alongside the app spec for every Full Spec request. This is the architecture decision package that `kaji-poc-build-deploy` should be able to consume.
+> Use this template for the internal build / deploy brief or an engineering appendix when a Full Spec needs implementation detail. Do **not** paste this entire template into a client-facing ClickUp description unless the user explicitly asks for the internal package. For client-facing output, summarize only the architecture options, recommended approach, what is built now vs later, and the mock / real system map in reader-friendly prose.
 
 ---
 
 ## Architecture Options Considered
 
-Compare at least 2 options. For non-trivial use cases, compare 3.
+Compare at least 2 options. For non-trivial use cases, compare 3. For client-facing output, summarize this in reader-friendly headings or bullets. Keep the full table below for the internal build / deploy brief.
 
 | Option | Interaction Model | Core Components | Closest Reuse Pattern | Why It Could Work | Why It Might Be Wrong | Verdict |
 |---|---|---|---|---|---|---|
@@ -119,7 +119,7 @@ Use the scorecard to compare the candidate options.
 
 ## Service Deployment Specs
 
-Provide one block per service. These should be explicit enough for `shakudo-microservice-lite`.
+Provide one block per service for the **internal build / deploy brief**. These should be explicit enough for `shakudo-microservice-lite`.
 
 ```yaml
 - jobName: [service-name]
@@ -151,7 +151,7 @@ pipelineYamlPath: run.sh
 
 ---
 
-## Deployment & Lifecycle Notes
+## Deployment & Lifecycle Notes (Internal)
 
 - **Preferred deploy order:** API/backend → UI/frontend → workers/webhooks.
 - **Parameter resolution order:** user-provided real secret → mounted credential → mock default.

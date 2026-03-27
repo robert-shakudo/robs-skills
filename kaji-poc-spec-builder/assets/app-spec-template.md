@@ -1,12 +1,12 @@
 # [App Name] — Application Specification
 
-> **Instructions**: Fill out every section. Do not leave placeholders. If information is unknown, state your assumption and mark it `[ASSUMED]`. The Example Interaction (Section 8) is mandatory — write a real message and response.
+> **Instructions**: Fill out every section that is relevant to the POC. Do not leave placeholders. If information is unknown, state it naturally in the relevant section and use `[ASSUMED]` only sparingly. The Example Interaction (Section 8) is mandatory — write a real message and response. Keep the tone client-facing and presentation-ready.
 
 ---
 
 ## 0. Company Introduction
 
-> This section establishes who the client is before the spec begins. It should be readable by anyone on the Shakudo team picking this up for the first time — and by a client executive reviewing what we've built.
+> This section establishes who the client is before the spec begins. It should be readable by a business or technical stakeholder reviewing the opportunity for the first time.
 
 **Company Name:** [Full legal or brand name]
 
@@ -27,9 +27,10 @@
 - [e.g., Primary tooling: Airflow, Confluence, JIRA, Perforce, TeamCity]
 
 **Audience for This Brief:**
-[Who is this spec written for? Who will read and act on it?]
-- Internal: [e.g., Shakudo ProServe team, solutions engineer, demo presenter]
-- Client: [e.g., VP of Engineering, Head of Operations, IT leadership]
+[Who will review, sponsor, or use this brief? Keep this client-safe.]
+- [e.g., Operations leadership]
+- [e.g., IT or data platform stakeholders]
+- [e.g., Delivery team preparing the POC]
 
 **Relationship Context:**
 [1–2 sentences on where we are with this client — new prospect, active engagement, post-demo follow-up, etc.]
@@ -120,23 +121,25 @@ Specifically:
 **Skills / Tools / Actions**
 The application can use connected skills, tools, or system actions to retrieve information and complete tasks.
 
-| Tool / Skill | What It Does |
-|---|---|
-| [Tool name] | [What the app can do with it] |
-| [Tool name] | [What the app can do with it] |
-| [Tool name] | [What the app can do with it] |
+- [Tool / skill name] — [What the app can do with it]
+- [Tool / skill name] — [What the app can do with it]
+- [Tool / skill name] — [What the app can do with it]
 
 ---
 
 ## 6. Systems Connected
 
-[List all external systems, databases, or platforms the app connects to. For a demo/POC, note which are mocked.]
+[List all external systems, databases, or platforms the app connects to. For a demo/POC, note which are mocked. When the output is headed to ClickUp, prefer short per-system bullets instead of Markdown tables.]
 
-| System | Type | Demo Status | Notes |
-|--------|------|-------------|-------|
-| [System name] | [CRM / ERP / DB / API / etc.] | ✅ Live / 🟡 Mocked / 🔴 TBD | [Any notes] |
-| [System name] | [Type] | ✅ / 🟡 / 🔴 | |
-| [System name] | [Type] | ✅ / 🟡 / 🔴 | |
+### [System name]
+- **Type:** [CRM / ERP / DB / API / etc.]
+- **Demo Status:** ✅ Live / 🟡 Mocked / 🔴 TBD
+- **Notes:** [Any notes]
+
+### [System name]
+- **Type:** [Type]
+- **Demo Status:** ✅ / 🟡 / 🔴
+- **Notes:** [Any notes]
 
 ---
 
@@ -205,15 +208,12 @@ This application provides value by helping users:
 [Describe the overall look and feel — e.g., "dark enterprise dashboard", "clean light SaaS", "terminal-style ops tool", "consumer-friendly warm interface".]
 
 **Brand Identity**
-
-| Element | Value |
-|---------|-------|
-| Primary color | `#[hex]` — [description] |
-| Secondary / background | `#[hex]` — [description] |
-| Accent / alert color | `#[hex]` — [description] |
-| Text color | `#[hex]` — [description] |
-| Font family | [Font name] — [weights used] |
-| Logo | [Source URL or "provided by client"] |
+- Primary color: `#[hex]` — [description]
+- Secondary / background: `#[hex]` — [description]
+- Accent / alert color: `#[hex]` — [description]
+- Text color: `#[hex]` — [description]
+- Font family: [Font name] — [weights used]
+- Logo: [Source URL or "provided by client"]
 
 **Color Usage Guide**
 - [Primary color]: [Where it's used — e.g., "interactive elements, buttons, highlights, active states"]
@@ -229,14 +229,11 @@ Describe the page/screen structure:
 - [Page or screen 3] — [what the user sees and does here]
 
 **Component Design**
-
-| Component | Design Notes |
-|-----------|-------------|
-| [e.g., Status indicator] | [e.g., Teal = healthy, Red = critical, Grey = unknown] |
-| [e.g., Incident card] | [e.g., Dark background, colored left border by severity] |
-| [e.g., Primary button] | [e.g., Teal fill, white text, Poppins 500] |
-| [e.g., Alert / notification] | [e.g., Red background, bold white text, dollar impact prominent] |
-| [e.g., Data table] | [e.g., Dark rows, alternating shades, teal column headers] |
+- [e.g., Status indicator] — [e.g., Teal = healthy, Red = critical, Grey = unknown]
+- [e.g., Incident card] — [e.g., Dark background, colored left border by severity]
+- [e.g., Primary button] — [e.g., Teal fill, white text, Poppins 500]
+- [e.g., Alert / notification] — [e.g., Red background, bold white text, dollar impact prominent]
+- [e.g., Data table] — [e.g., Dark rows, alternating shades, teal column headers]
 
 **Platform / Responsive Targets**
 - [e.g., Desktop first — 1440px primary width]

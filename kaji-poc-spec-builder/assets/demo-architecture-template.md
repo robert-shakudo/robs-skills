@@ -131,7 +131,7 @@ Provide one block per service for the **internal build / deploy brief**. These s
   pipelineYamlPath: [app-folder]/[service]/run.sh
   port: "8787"
   deployOrder: 1
-  lifecycleMode: lite-create-delete
+  lifecycleMode: lite-graphql-managed
   parameters:
     - key: [ENV_VAR]
       default: [mock-value-or-empty]
@@ -139,7 +139,7 @@ Provide one block per service for the **internal build / deploy brief**. These s
   smokeTests:
     - path: /health
       expected: 200
-  recreateNotes: [Delete + recreate if only lite lifecycle is available]
+  recreateNotes: [Only use delete + recreate if the upstream lite skill still requires a destructive fallback]
 ```
 
 If using the app-directory pattern instead, make that explicit:
@@ -155,7 +155,7 @@ pipelineYamlPath: run.sh
 
 - **Preferred deploy order:** API/backend → UI/frontend → workers/webhooks.
 - **Parameter resolution order:** user-provided real secret → mounted credential → mock default.
-- **Lite lifecycle note:** if only `shakudo-microservice-lite` is available, stop and restart actions may require delete + recreate.
+- **Lite lifecycle note:** `shakudo-microservice-lite` is the source of truth for current start / stop / restart / edit behavior; only call out destructive fallback if this service still needs it.
 - **Smoke tests must pass before sharing URLs.**
 
 ---

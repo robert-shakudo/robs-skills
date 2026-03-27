@@ -10,10 +10,10 @@ Companion to `kaji-poc-spec-builder`. This skill takes the completed spec, simpl
 
 This skill now:
 - uses **`shakudo-microservice-lite`** as the default deployment workflow
-- treats deployment as a **GraphQL create / inspect / delete** flow, not an MCP-only flow
+- treats deployment as a **GraphQL-first Shakudo workflow** driven by `shakudo-microservice-lite`
 - adds an **architecture sanity check** before building so POCs are not overbuilt
 - expects the spec to include **Architecture Options Considered**, **Recommended Build Strategy**, and **Component Selection Rationale**
-- makes **stop / start / restart** behavior explicit when only lite lifecycle is available
+- defers detailed lifecycle semantics to the upstream `shakudo-microservice-lite` skill while staying generic downstream
 
 ---
 
@@ -44,12 +44,12 @@ Kaji will:
 | Deploy / create | `shakudo-microservice-lite` | create from registry or spec |
 | Inspect status | `shakudo-microservice-lite` | search + `pipelineJobs` + `getPodEvents` |
 | Start an absent service | `shakudo-microservice-lite` | create |
-| Start a stopped service | full `shakudo-microservice` if available | delete + recreate after confirmation |
-| Stop a running service | full `shakudo-microservice` if scale-to-zero is available | delete only after confirmation |
-| Restart | full `shakudo-microservice` if available | delete + recreate |
+| Start a stopped service | `shakudo-microservice-lite` lifecycle workflow | follow the current upstream lite-skill guidance |
+| Stop a running service | `shakudo-microservice-lite` lifecycle workflow | follow the current upstream lite-skill guidance |
+| Restart | `shakudo-microservice-lite` lifecycle workflow | follow the current upstream lite-skill guidance |
 | Delete | `shakudo-microservice-lite` | delete by exact ID |
 
-If only lite is available, the skill must clearly tell the user that stop / restart are destructive.
+For exact start / stop / restart semantics, always follow the current `shakudo-microservice-lite` skill rather than hard-coding assumptions here.
 
 ---
 
@@ -93,5 +93,4 @@ kaji-poc-build-deploy/
 
 - **kaji-poc-spec-builder** — creates the buildable spec and architecture rationale
 - **shakudo-microservice-lite** — default deployment workflow
-- **shakudo-microservice** — optional full lifecycle operations
 - **kaji-agentic-engineering-estimator** — pricing / scoping after the POC is defined

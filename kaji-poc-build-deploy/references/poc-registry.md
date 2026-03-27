@@ -23,11 +23,10 @@ Use this file with `kaji-poc-build-deploy` and `shakudo-microservice-lite` to re
 
 ### Lite lifecycle rules
 
-- **Create / inspect / delete** → `shakudo-microservice-lite`
-- **Start after delete** → recreate from this registry
-- **Stop in lite-only mode** → delete after explicit confirmation
-- **Restart in lite-only mode** → delete + recreate after explicit confirmation
-- **Scale-to-zero / preserve config** → only if the full `shakudo-microservice` skill is available
+- **Create / inspect / lifecycle operations** → `shakudo-microservice-lite`
+- **This registry is downstream metadata, not the lifecycle source of truth**
+- **For start / stop / restart / edit / cancel semantics** → follow the current upstream `shakudo-microservice-lite` skill
+- **Document destructive fallback only when it is still required for that service**
 
 ### Parameter resolution order
 
@@ -42,9 +41,9 @@ Resolve runtime parameters in this order:
 - **Public URL**: `https://<subdomain>.dev.hyperplane.dev`
 - **Internal URL**: `http://hyperplane-service-<job-prefix>.hyperplane-pipelines.svc.cluster.local:<port>`
 
-### Lite recreate recipe
+### Destructive recreate recipe
 
-When full lifecycle controls are unavailable:
+Use this only if the upstream `shakudo-microservice-lite` guidance still requires a destructive fallback for the requested action:
 1. search for the exact service ID
 2. confirm destructive delete with the user
 3. delete the old service
@@ -73,7 +72,6 @@ Each service definition should provide:
 - `parameters`
 - `deployOrder`
 - `lifecycleMode`
-- `parameters`
 - `smokeTests`
 - `recreateNotes`
 
@@ -98,9 +96,9 @@ Each service definition should provide:
   pipelineYamlPath: hr-resume-demo/run.sh
   port: "8787"
   deployOrder: 1
-  lifecycleMode: lite-create-delete
+  lifecycleMode: lite-graphql-managed
   parameters: []
-  recreateNotes: Delete + recreate if only lite lifecycle is available
+  recreateNotes: Only use delete + recreate if the upstream lite skill still requires a destructive fallback
   smokeTests:
     - path: /health
       expected: 200
@@ -116,8 +114,7 @@ Each service definition should provide:
 ### Lite lifecycle notes
 
 - Start: create `hr-resume-demo`
-- Stop in lite-only mode: delete after confirmation
-- Restart in lite-only mode: delete + recreate
+- Start / stop / restart semantics should follow the current upstream `shakudo-microservice-lite` guidance.
 
 ---
 
@@ -140,7 +137,7 @@ Each service definition should provide:
   pipelineYamlPath: gallo-freight-exception-hub/api/run.sh
   port: "8787"
   deployOrder: 1
-  lifecycleMode: lite-create-delete
+  lifecycleMode: lite-graphql-managed
   parameters:
     - key: OPENAI_API_KEY
       default: sk-mock
@@ -148,7 +145,7 @@ Each service definition should provide:
       default: ""
     - key: GALLO_API_KEY
       default: ""
-  recreateNotes: Delete + recreate if only lite lifecycle is available
+  recreateNotes: Only use delete + recreate if the upstream lite skill still requires a destructive fallback
   smokeTests:
     - path: /health
       expected: 200
@@ -164,9 +161,9 @@ Each service definition should provide:
   pipelineYamlPath: gallo-freight-exception-hub/ui/run.sh
   port: "8787"
   deployOrder: 2
-  lifecycleMode: lite-create-delete
+  lifecycleMode: lite-graphql-managed
   parameters: []
-  recreateNotes: Delete + recreate if only lite lifecycle is available
+  recreateNotes: Only use delete + recreate if the upstream lite skill still requires a destructive fallback
   smokeTests:
     - path: /
       expected: 200-or-302
@@ -205,13 +202,13 @@ Each service definition should provide:
   pipelineYamlPath: reagan-nlp-sql-demo/run.sh
   port: "8787"
   deployOrder: 1
-  lifecycleMode: lite-create-delete
+  lifecycleMode: lite-graphql-managed
   parameters:
     - key: ANTHROPIC_API_KEY
       default: sk-ant-mock
     - key: DATABASE_URL
       default: seeded-mock-schema
-  recreateNotes: Delete + recreate if only lite lifecycle is available
+  recreateNotes: Only use delete + recreate if the upstream lite skill still requires a destructive fallback
   smokeTests:
     - path: /
       expected: 200-or-302
@@ -249,7 +246,7 @@ Each service definition should provide:
   pipelineYamlPath: campbell-ops-demo/run.sh
   port: "8787"
   deployOrder: 1
-  lifecycleMode: lite-create-delete
+  lifecycleMode: lite-graphql-managed
   parameters:
     - key: ANTHROPIC_API_KEY
       default: sk-ant-mock
@@ -261,7 +258,7 @@ Each service definition should provide:
       default: sqlite-fallback
     - key: SUPABASE_KEY
       default: ""
-  recreateNotes: Delete + recreate if only lite lifecycle is available
+  recreateNotes: Only use delete + recreate if the upstream lite skill still requires a destructive fallback
   smokeTests:
     - path: /health
       expected: 200
@@ -304,7 +301,7 @@ Each service definition should provide:
   pipelineYamlPath: dynex-mbs/api/run.sh
   port: "8787"
   deployOrder: 1
-  lifecycleMode: lite-create-delete
+  lifecycleMode: lite-graphql-managed
   parameters:
     - key: OPENAI_API_KEY
       default: sk-mock
@@ -312,7 +309,7 @@ Each service definition should provide:
       default: https://arize-phoenix.dev.hyperplane.dev
     - key: N8N_WEBHOOK_URL
       default: https://n8n-v2.dev.hyperplane.dev/webhook/briefing-approval
-  recreateNotes: Delete + recreate if only lite lifecycle is available
+  recreateNotes: Only use delete + recreate if the upstream lite skill still requires a destructive fallback
   smokeTests:
     - path: /health
       expected: 200
@@ -328,9 +325,9 @@ Each service definition should provide:
   pipelineYamlPath: dynex-mbs/ui/run.sh
   port: "8787"
   deployOrder: 2
-  lifecycleMode: lite-create-delete
+  lifecycleMode: lite-graphql-managed
   parameters: []
-  recreateNotes: Delete + recreate if only lite lifecycle is available
+  recreateNotes: Only use delete + recreate if the upstream lite skill still requires a destructive fallback
   smokeTests:
     - path: /
       expected: 200-or-302

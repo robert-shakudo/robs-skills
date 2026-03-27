@@ -29,7 +29,7 @@ This skill turns a completed POC spec into a running application on Shakudo. It 
 - **Reuse before creating.** Prefer forking patterns from the demo library before inventing a fresh stack.
 - **Ask for missing credentials before coding.** Never discover blockers mid-build.
 - **Deploy only from synced git.** Local code, remote branch, and Shakudo git server must agree.
-- **Use `shakudo-microservice-lite` by default.** It is the standard workflow for create / inspect / delete. Use the full `shakudo-microservice` skill only when scale or restart behavior is actually available and needed.
+- **Use `shakudo-microservice-lite` by default.** Treat it as the source of truth for current Shakudo GraphQL lifecycle behavior and helper queries.
 
 ---
 
@@ -520,10 +520,10 @@ Capture:
 - job type
 - working dir and pipeline path pairing
 - deploy order
-- lifecycle mode (`lite-create-delete` or fuller lifecycle if available)
+- lifecycle mode (for example `lite-graphql-managed`)
 - required parameters and their default/mock behavior
 - smoke tests
-- recreate notes for lite-only stop/start flows
+- recreate notes only when destructive fallback is still needed
 
 ---
 
@@ -532,8 +532,8 @@ Capture:
 When the user provides real credentials later:
 
 1. update the deployment parameters
-2. if using lite-only lifecycle, delete and recreate the affected service
-3. if the full microservice skill is available, use it for restart / scale workflows after config changes
+2. follow the current `shakudo-microservice-lite` lifecycle guidance for the least-destructive refresh action
+3. only use destructive recreate if the upstream lite skill indicates it is still required for that case
 
 Always explain whether the refresh will be destructive.
 
@@ -541,17 +541,15 @@ Always explain whether the refresh will be destructive.
 
 ## Start / Stop / Restart / Delete
 
-`shakudo-microservice-lite` is **minimal lifecycle only**. It supports create, inspect, and delete. It does **not** provide scale-to-zero or non-destructive restart operations.
+For service lifecycle actions, `kaji-poc-build-deploy` should stay generic and defer exact semantics to the upstream `shakudo-microservice-lite` skill.
 
-### Lifecycle policy
+### Downstream lifecycle policy
 
-| User intent | Preferred path | Lite-only fallback |
+| User intent | Preferred path in this skill | Source of truth |
 |---|---|---|
-| Start a missing service | Create from registry config | Same |
-| Start an existing but stopped service | Use full `shakudo-microservice` if scale / restart is available | Delete exact old service ID + recreate after confirmation |
-| Stop a running service | Scale to 0 with full skill if available | Lite cannot pause; delete only after explicit confirmation |
-| Restart a running service | Restart with full skill if available | Delete + recreate after explicit confirmation |
-| Delete permanently | Delete by exact ID | Same |
+| Start / stop / restart / edit / cancel an existing service | Resolve the service, then follow the current upstream lite-skill workflow | `shakudo-microservice-lite` |
+| Create a missing service | Create from the registry config or build brief | `shakudo-microservice-lite` |
+| Delete permanently | Delete by exact ID after confirmation | `shakudo-microservice-lite` |
 
 ### Search first
 
@@ -560,37 +558,18 @@ Always resolve the exact service ID before any destructive action:
 - if multiple matches exist, ask the user which one
 - never delete by guessed name alone
 
-### Lite-mode start decision tree
+### Destructive fallback rule
 
-If only lite is available:
-1. search for the exact service name
-2. if there is **no existing service**, create from the registry or build brief
-3. if there is an existing service that is already healthy, tell the user it is already running
-4. if there is an existing service in a stopped / failed / stale state, explain that lite mode requires delete + recreate
-5. get explicit confirmation before deleting the old ID
-6. recreate, poll, and smoke test again
+If the upstream lite skill indicates that the requested action still requires delete + recreate:
+1. explain clearly that the action is destructive
+2. confirm delete + recreate is acceptable
+3. delete by exact ID
+4. recreate from the registry / build brief config
+5. poll and smoke test again
 
-### Lite-mode stop behavior
+### Registry coordination rule
 
-If only lite is available, say this clearly:
-
-> "I can recreate or delete this service with `shakudo-microservice-lite`, but I cannot scale it to zero non-destructively. Do you want me to delete it?"
-
-### Lite-mode restart behavior
-
-If the user says restart and only lite is available:
-1. confirm delete + recreate is acceptable
-2. delete by exact ID
-3. recreate from the registry / build brief config
-4. poll and smoke test again
-
-### Stop all POCs
-
-If the user asks to stop everything and only lite is available:
-- list every service that would be deleted in `jobName (id)` format
-- ask for explicit confirmation
-- delete each by exact ID
-- report the deleted IDs and any recreate notes needed later
+The registry should capture deployment metadata and any known recreate notes, but it should not override newer lifecycle behavior documented in the upstream lite skill.
 
 ## Execution Checklist
 
@@ -635,6 +614,5 @@ If the user asks to stop everything and only lite is available:
 ## Related Skills
 
 - **kaji-poc-spec-builder** — Phase 1: generates the spec and component-selection rationale
-- **shakudo-microservice-lite** — Standard deployment workflow for create / inspect / delete
-- **shakudo-microservice** — Optional full-lifecycle operations when scale / restart is available
+- **shakudo-microservice-lite** — Standard deployment workflow and lifecycle source of truth for Shakudo service operations
 - **kaji-agentic-engineering-estimator** — Price the engagement after the POC is built

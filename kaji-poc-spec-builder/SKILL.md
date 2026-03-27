@@ -342,7 +342,7 @@ pipelineYamlPath: my-app/api/run.sh
 
 Parameter defaults should show whether they come from a real secret, a mounted env var, or a mock fallback.
 
-If the design depends on lite-only lifecycle behavior, say so explicitly in the internal brief so the deploy skill knows stop / restart may require delete + recreate.
+If the design has any lifecycle constraints or known destructive fallbacks, say so explicitly in the internal brief while deferring exact action semantics to the upstream `shakudo-microservice-lite` skill.
 
 ## Output Format
 

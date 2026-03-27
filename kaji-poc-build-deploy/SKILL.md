@@ -1,6 +1,6 @@
 ---
 name: kaji-poc-build-deploy
-description: "One-command POC build and deploy. Reads a ClickUp spec (from kaji-poc-spec-builder), runs an architecture sanity check, builds the minimum credible app, and deploys to Shakudo using shakudo-microservice-lite GraphQL workflows. Uses mocks for unconfigured systems and returns live URLs."
+description: "One-command POC build and deploy. Consumes a completed spec/build brief for new builds or operates an already-built Shakudo app via redeploy / start / stop / scale / restart workflows using shakudo-microservice-lite GraphQL workflows. Uses mocks for unconfigured systems and returns live URLs."
 license: MIT
 compatibility: opencode
 metadata:
@@ -21,7 +21,7 @@ metadata:
 
 **Phase 2 of the POC workflow** — companion to `kaji-poc-spec-builder`.
 
-This skill turns a completed POC spec into a running application on Shakudo. It validates the spec, checks credentials, simplifies the architecture when the spec is overbuilt for a POC, builds only the minimum credible components, deploys with `shakudo-microservice-lite`, and returns live URLs.
+This skill has two main functions: (1) turn a completed POC spec into a running application on Shakudo, and (2) operate an already-built app already running on Shakudo through redeploy / restart / stop / start / scale workflows. It validates the spec when a new build is needed, checks credentials, simplifies the architecture when the spec is overbuilt for a POC, builds only the minimum credible components, deploys with `shakudo-microservice-lite`, and returns live URLs.
 
 ## Core principles
 
@@ -30,6 +30,21 @@ This skill turns a completed POC spec into a running application on Shakudo. It 
 - **Ask for missing credentials before coding.** Never discover blockers mid-build.
 - **Deploy only from synced git.** Local code, remote branch, and Shakudo git server must agree.
 - **Use `shakudo-microservice-lite` by default.** Treat it as the source of truth for current Shakudo GraphQL lifecycle behavior and helper queries.
+
+## Two Main Functions
+
+### Function 1 — Build / Rebuild from Spec or Registry
+- consume a completed `kaji-poc-spec-builder` output or a known library POC definition
+- validate architecture, credentials, git sync, and deployment metadata
+- build what is missing and deploy or recreate the required services
+
+### Function 2 — Operate Existing Built Apps
+- resolve the existing service or services
+- inspect current deployment state
+- redeploy / restart / stop / start / scale the already-built app
+- use the upstream `shakudo-microservice-lite` lifecycle workflow as the execution source of truth
+
+`kaji-poc-spec-builder` owns spec creation. `kaji-poc-build-deploy` either consumes that spec or operates an existing deployed app.
 
 ---
 
@@ -40,6 +55,8 @@ This skill turns a completed POC spec into a running application on Shakudo. It 
 - "build and deploy this spec"
 - "spin up the demo for [client]"
 - "deploy / redeploy [service name]"
+- "restart [service name]"
+- "scale [service name] to 0 / 1 / N"
 - "start [POC name]" or "recreate [POC name]"
 - "stop / teardown / delete [POC name]"
 - "take the [name] POC live — here are the credentials"
@@ -47,7 +64,7 @@ This skill turns a completed POC spec into a running application on Shakudo. It 
 
 ---
 
-## Two Paths
+## Build / Rebuild Paths
 
 ### Path A — Library POC
 
@@ -69,9 +86,21 @@ For a new ClickUp spec:
 
 ---
 
-## Required Inputs from `kaji-poc-spec-builder`
+## Operation-Only Shortcut for Built Apps
 
-Do not build unless the spec includes all of the following:
+If the request is only to redeploy / restart / stop / scale an already-built app:
+- skip the full spec-validation flow unless a rebuild is actually required
+- resolve the app from the registry or by exact service lookup
+- inspect current state, pod status, and smoke-test state
+- choose the least-destructive lifecycle action
+- follow the upstream `shakudo-microservice-lite` workflow
+- only fall back to recreate when the upstream lite skill indicates it is necessary
+
+---
+
+## Required Inputs from `kaji-poc-spec-builder` (for build / rebuild requests)
+
+Do not build unless the spec includes all of the following. For pure lifecycle operations on already-built apps, registry metadata and current service state may be enough:
 
 | Required output | Why it matters |
 |---|---|
@@ -91,7 +120,7 @@ If anything is missing, stop and say:
 
 ## Phase 0: Spec Validation
 
-Read the ClickUp task and confirm all required sections are present.
+Read the ClickUp task and confirm all required sections are present. This phase applies to new builds / rebuilds; skip it for pure restart / stop / scale / redeploy requests on already-built apps.
 
 | Check | Where to look | What to confirm |
 |---|---|---|
@@ -539,15 +568,16 @@ Always explain whether the refresh will be destructive.
 
 ---
 
-## Start / Stop / Restart / Delete
+## Operate Existing Built Apps (Start / Stop / Scale / Restart / Redeploy / Delete)
 
-For service lifecycle actions, `kaji-poc-build-deploy` should stay generic and defer exact semantics to the upstream `shakudo-microservice-lite` skill.
+This is the second main function of the skill. For service lifecycle actions on already-built apps, `kaji-poc-build-deploy` should stay generic and defer exact semantics to the upstream `shakudo-microservice-lite` skill.
 
 ### Downstream lifecycle policy
 
 | User intent | Preferred path in this skill | Source of truth |
 |---|---|---|
-| Start / stop / restart / edit / cancel an existing service | Resolve the service, then follow the current upstream lite-skill workflow | `shakudo-microservice-lite` |
+| Start / stop / scale / restart / edit / cancel an existing service | Resolve the service, then follow the current upstream lite-skill workflow | `shakudo-microservice-lite` |
+| Redeploy / recreate a current built app | Use the registry or build brief plus the current upstream lite-skill workflow | `shakudo-microservice-lite` |
 | Create a missing service | Create from the registry config or build brief | `shakudo-microservice-lite` |
 | Delete permanently | Delete by exact ID after confirmation | `shakudo-microservice-lite` |
 
@@ -572,6 +602,9 @@ If the upstream lite skill indicates that the requested action still requires de
 The registry should capture deployment metadata and any known recreate notes, but it should not override newer lifecycle behavior documented in the upstream lite skill.
 
 ## Execution Checklist
+
+For pure lifecycle operations on already-built apps, use only the relevant subset of this checklist (service resolution, lifecycle action, verification, and smoke tests).
+
 
 - [ ] ClickUp spec read and validated
 - [ ] Architecture sanity check completed
@@ -605,6 +638,7 @@ The registry should capture deployment metadata and any known recreate notes, bu
 - **Do not assume `createShakudoService` means running.** Poll `pipelineJobs`.
 - **Do not derive container paths from your local checkout path.** Use `/tmp/git/monorepo`.
 - **Do not use lite delete as a hidden stop action.** Tell the user it is destructive.
+- **Do not block restart / stop / scale of an already-built app on full spec validation if registry + current service metadata are sufficient.**
 - **Do not keep every component from the spec if they are unnecessary for the POC.** Simplify first.
 - **Do not report URLs before smoke tests pass.**
 - **Do not build n8n workflows with an expired key.** Mock or export instead.

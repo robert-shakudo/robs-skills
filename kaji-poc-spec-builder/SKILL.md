@@ -1,6 +1,6 @@
 ---
 name: kaji-poc-spec-builder
-description: "Turn a client use case into a buildable POC spec and architecture decision package. Produces the full app spec, architecture options considered, recommended build strategy, component selection rationale, mock/real system map, Shakudo build stack, service deployment specs, and POC build brief."
+description: "Turn a client use case into a client-facing POC spec plus an optional internal build/deploy brief. Produces the app spec, architecture recommendation, mock/real system map, and when needed the deployment details for kaji-poc-build-deploy."
 license: MIT
 compatibility: opencode
 metadata:
@@ -22,15 +22,26 @@ Convert a client use case into a complete, buildable POC specification that an e
 
 ## Output package
 
-Every full spec should produce:
+By default, every full spec should produce **two separate outputs**:
+
+### 1. Client-facing POC spec
+This is the default deliverable and should be safe to paste into ClickUp or show to the client.
+It should include:
 1. company background + app spec (sections 0–12)
 2. architecture options considered
-3. recommended build strategy
-4. component selection rationale
-5. mock / real system map + environment table
-6. Shakudo build stack (platform map)
-7. service deployment specs
-8. POC build brief
+3. what will be built now vs later (expressed client-safely)
+4. mock / real system map + environment table
+5. Shakudo build stack (platform map) if helpful to explain the solution
+
+### 2. Internal build/deploy brief
+This is for Shakudo only and should contain implementation metadata such as:
+1. recommended build strategy
+2. component selection rationale
+3. service deployment specs
+4. POC build brief
+5. internal deployment notes, smoke tests, repo structure, env vars, and other operator details
+
+Unless the user explicitly asks for an internal-only version, keep the **main spec client-facing** and move internal scaffolding into a separate internal brief.
 
 ## Core principles
 
@@ -62,15 +73,19 @@ Every full spec should produce:
 
 Use for new client opportunities, internal POCs, or anything that may be built.
 
-Includes:
-- full app spec (sections 0–12)
+Normally includes:
+- client-facing app spec (sections 0–12)
 - architecture options considered
-- recommended build strategy
-- component selection rationale
+- recommended build strategy / what is built now vs later
 - mock / real system map
-- Shakudo build stack
+- environment table
+- Shakudo build stack if it helps explain the solution
+
+If implementation handoff is also needed, add a **separate internal build / deploy brief** with:
+- component selection rationale
 - service deployment specs
 - POC build brief
+- operator notes for `kaji-poc-build-deploy`
 
 ### Quick Spec
 
@@ -106,7 +121,7 @@ Extract:
 - constraints (security, infra, timeline, compliance)
 - explicit corrections (for example: Azure not GCP, pre-built not live build, no Slack, use Mattermost)
 
-After reading, summarize what you found in 2–3 sentences. Then continue. Do **not** ask questions that were already answered.
+After reading, summarize what you found in 2–3 sentences **internally** and continue. Do **not** include that summary in the client-facing deliverable unless the user explicitly asks for research notes or an internal brief. Do **not** ask questions that were already answered.
 
 ---
 
@@ -116,6 +131,8 @@ If critical information is still missing, ask **at most 3 questions**:
 1. Who is the primary user?
 2. What are they doing manually today that this replaces?
 3. What would make this POC successful for the client?
+
+Use assumptions internally when needed, but **do not add sections titled "Source Summary", "Assumptions", "Formatting Notes", or other process metadata to the client-facing POC spec** unless the user explicitly asks for them. If something is uncertain inside the client-facing spec, state it directly in the relevant section in plain language instead of creating a separate meta section.
 
 ### Infrastructure question (always ask if unknown)
 
@@ -200,38 +217,26 @@ For every Full Spec, produce both:
 
 ### Required architecture output
 
-Produce a table like this:
+Produce clear architecture comparison content. If the output is client-facing, prefer readable headings and bullets over internal-heavy tables when that will communicate better. Keep the analysis client-safe and focused on why the chosen approach makes sense, not on internal process mechanics.
 
-| Option | Interaction Model | Core Components | Closest Reuse Pattern | Why It Could Work | Why It Might Be Wrong | Verdict |
-|---|---|---|---|---|---|---|
-| Option A | | | | | | |
-| Option B | | | | | | |
-| Option C | | | | | | |
-
-Then add an Architecture Scorecard table with High / Medium / Low ratings.
+If a detailed internal comparison matrix is still useful for engineering or build/deploy, place it in the separate internal brief.
 
 ### Phase 3: Recommended Build Strategy
 
 After comparing options, produce a concise recommendation.
 
-Required fields:
+For the **client-facing spec**, keep this section readable and client-safe. It should explain:
+- app type
+- primary interaction model
+- recommended architecture
+- what is built now
+- what is mocked now
+- what comes later
+- why this is the best POC choice
 
-```md
-## Recommended Build Strategy
-- App type:
-- Primary interaction model:
-- Recommended architecture:
-- Best component stack:
-- Closest existing demo to reuse:
-- Components to build now:
-- Components to mock now:
-- Components to defer to Year 2:
-- Why this is the best POC choice:
-```
+For the **internal build/deploy brief**, include the full engineering-oriented build strategy details needed by `kaji-poc-build-deploy`, including component selection rationale, simplification decisions, service deployment specs, and POC build brief details.
 
-Also include a short **POC Simplification Decisions** table that explicitly says what is being kept, removed, mocked, or deferred.
-
-This section is mandatory. `kaji-poc-build-deploy` depends on it.
+`kaji-poc-build-deploy` still depends on these details, but they do **not** all need to appear in the client-facing spec.
 
 ### Phase 4: Build the App Spec (Sections 0–12)
 
@@ -239,25 +244,38 @@ Fill out all sections in [App Spec Template](./assets/app-spec-template.md).
 
 Key rules:
 - **Section 0 first** — it establishes who the client is
-- **No placeholders** — if unknown, state the assumption and mark `[ASSUMED]`
+- **No placeholders** — if unknown, state the uncertainty naturally in the relevant section; only use `[ASSUMED]` sparingly when it truly helps clarity
 - **Section 8 is mandatory** — write a real user message and a real response
 - **Section 10 must be honest** — clearly separate POC scope from later phases
 - **Capability names should describe user value**, not technology
+- **The spec should read like a client-facing product brief, not an internal reasoning log**
+- **Do not prepend meta sections like Source Summary or Assumptions to the client-facing spec**
 
 ---
 
 ### Phase 5: Mock / Real System Map and Environment Table
 
-For every system mentioned or implied, produce:
+For every system mentioned or implied, produce a clear mapping of what is real now, what is mocked now, and what changes later.
 
-| System | Status | Mock Strategy | Real Integration Path | What Changes on Go-Live |
-|---|---|---|---|---|
-| [System] | ✅ / 🟡 / 🔴 | | | |
+If the spec is client-facing, present this in a readable format using headings and bullets or a simple table only if it improves readability. Avoid excessive deployment/operator jargon.
 
 Status meanings:
 - ✅ **Available** — live integration already exists or public data is enough
 - 🟡 **Mocked** — realistic fake for the POC, swappable later
 - 🔴 **Needs Build** — custom connector or custom work required
+
+
+### Client-Facing Output Rule
+
+Unless the user explicitly asks for an internal engineering package, the main POC spec must be suitable to show directly to the client.
+
+That means:
+- keep the document focused on the app, the workflow, the value, and what will be demonstrated
+- avoid internal process headings such as "Source Summary", "Assumptions", "Formatting Notes", or "Internal Notes" in the client-facing version
+- avoid raw deployment metadata, env var dumps, repo paths, smoke tests, and operator instructions in the client-facing version
+- keep internal engineering details in a separate **Internal Build / Deploy Brief**
+
+If the user asks for one document only, bias toward the client-facing version and append a short internal appendix only if absolutely necessary.
 
 Always include:
 
@@ -270,15 +288,15 @@ Always include:
 
 ### Phase 6: Shakudo Build Stack and Component Selection Rationale
 
-Build the Shakudo stack explicitly.
+Explain the Shakudo stack intentionally.
 
-Required table:
+For the **client-facing spec**, use a short, readable mapping or bullet list when that communicates better than a rigid table in ClickUp.
+
+For the **internal build / deploy brief**, include a fuller component mapping such as:
 
 | App Function | Recommended Component | Why It Is Used | Build Now or Later |
 |---|---|---|---|
 | [Function] | [Kaji / microservice / n8n / Dremio / RAG / etc.] | | |
-
-This replaces the older shallow "platform map". The goal is not just to name components, but to justify them.
 
 Also produce a short **Component Selection Rationale** block that explains:
 - why the chosen components are the best fit
@@ -287,11 +305,13 @@ Also produce a short **Component Selection Rationale** block that explains:
 
 ---
 
-### Phase 7: Service Deployment Specs and POC Build Brief
+### Phase 7: Internal Build / Deploy Brief (only when needed)
 
-The build brief must be good enough for `kaji-poc-build-deploy` to act on.
+Use this phase when the user explicitly wants implementation details, when the work will be handed to `kaji-poc-build-deploy`, or when Shakudo needs an internal operator brief.
 
-Include:
+Keep this material separate from the client-facing spec unless the user explicitly asks for a combined package.
+
+The internal brief should include:
 - environment vars for **POC** and **go-live**
 - build checklist
 - acceptance criteria
@@ -322,20 +342,25 @@ pipelineYamlPath: my-app/api/run.sh
 
 Parameter defaults should show whether they come from a real secret, a mounted env var, or a mock fallback.
 
-If the design depends on lite-only lifecycle behavior, say so explicitly in the build brief so the deploy skill knows stop / restart may require delete + recreate.
+If the design depends on lite-only lifecycle behavior, say so explicitly in the internal brief so the deploy skill knows stop / restart may require delete + recreate.
 
 ## Output Format
 
 **SHOW-FIRST RULE**: display the actual output before offering to update ClickUp.
 
-Deliver in this order:
-1. full app spec (sections 0–12)
-2. architecture options considered
-3. recommended build strategy
-4. component selection rationale + Shakudo build stack
-5. mock / real system map + environment table
-6. service deployment specs
-7. POC build brief
+Default delivery order:
+1. client-facing POC spec (sections 0–12)
+2. architecture options considered (client-safe summary)
+3. recommended build strategy / what is built now vs later
+4. mock / real system map + environment table
+5. Shakudo build stack only if it helps explain the solution
+
+If an internal handoff is also needed, then add:
+6. internal build / deploy brief
+   - component selection rationale
+   - service deployment specs
+   - POC build brief
+   - operator notes
 
 Then ask:
 
@@ -344,8 +369,8 @@ Then ask:
 If yes, generate the walk-through. If no, skip it.
 
 Then offer:
-- update the ClickUp task with the spec
-- create a new ClickUp task if needed
+- update the ClickUp task with the **client-facing spec only**
+- save the internal brief as a separate file if needed
 - generate a client-facing one-pager
 
 ---
@@ -390,7 +415,7 @@ The walk-through is **not** part of the ClickUp task description.
 ## Execution Checklist
 
 - [ ] All sources read first
-- [ ] Source summary stated before questions
+- [ ] Source summary captured internally before questions
 - [ ] Client website reviewed if client is known
 - [ ] App type classified
 - [ ] Infrastructure question asked if needed
@@ -404,8 +429,8 @@ The walk-through is **not** part of the ClickUp task description.
 - [ ] Environment table included
 - [ ] Shakudo build stack completed
 - [ ] Component selection rationale completed
-- [ ] Service deployment specs completed
-- [ ] POC build brief completed
+- [ ] Service deployment specs completed when an internal brief is needed
+- [ ] POC build brief completed when an internal brief is needed
 - [ ] Full spec shown before any ClickUp update offer
 - [ ] Walk-through offered only after spec is shown
 
@@ -413,7 +438,7 @@ The walk-through is **not** part of the ClickUp task description.
 
 ## Integration
 
-- **ClickUp** — write the full spec into one task description
+- **ClickUp** — write the client-facing spec into one task description; keep internal build/deploy material in a separate file or appendix unless explicitly requested
 - **Mattermost** — share the spec for internal review
 - **kaji-poc-build-deploy** — builds and deploys the spec after architecture decisions are made
 - **kaji-agentic-engineering-estimator** — uses the spec to scope effort and pricing
